@@ -1,0 +1,13 @@
+{
+  "name": "gifted-brains-eduspace-admin",
+  "version": "12.0.18",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "verify": "node scripts/verify-edgeone.mjs"
+  },
+  "dependencies": {}
+}

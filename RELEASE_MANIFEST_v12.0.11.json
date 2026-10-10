@@ -1,0 +1,24 @@
+{
+  "version": "12.0.11",
+  "scope": "Admin-only",
+  "key_fixes": [
+    "Admin-to-Student shared-backend proxy normalization",
+    "Student password verification/reset endpoint compatibility",
+    "Subject catalog and dynamic dropdown restoration",
+    "Subject icon persistence",
+    "Learning material create/update compatibility",
+    "Chunked uploads for larger learning-material files",
+    "Faster safe read caching",
+    "EdgeOne direct HTML/API routing"
+  ],
+  "verification": {
+    "javascript_files": 7,
+    "javascript_syntax": "PASS",
+    "html_files": 2,
+    "html_parse": "PASS",
+    "css_balance": "PASS (tinycss2 parse)",
+    "edgeone_verifier": "PASS",
+    "zip_integrity": "PASS",
+    "live_production": "NOT EXERCISED"
+  }
+}

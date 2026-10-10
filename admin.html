@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d2a5c">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon.ico">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Admin Console • Gifted Brainz EduSpace</title>
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/eduspace-admin.css">
+<style id="qb-compact-style">
+#v-bank .qb-shell{display:grid;gap:12px}
+#v-bank .qb-card{padding:14px;margin:0}
+#v-bank .qb-card .section-head{margin-bottom:8px}
+#v-bank .qb-import-form{display:grid;grid-template-columns:1fr 1.15fr 1.4fr auto;gap:10px;align-items:end}
+#v-bank .qb-work-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:12px;align-items:start}
+#v-bank .qb-side-stack{display:grid;gap:12px}
+#v-bank .qb-form-compact{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#v-bank .qb-form-compact .full{grid-column:1/-1}
+#v-bank .qb-list-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#v-bank .qb-list-toolbar select{min-width:145px}
+#v-bank .qb-topic-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.08))}
+#v-bank .qb-topic-row:last-child{border-bottom:0}
+@media(max-width:900px){#v-bank .qb-import-form,#v-bank .qb-work-grid{grid-template-columns:1fr}}
+@media(max-width:640px){#v-bank .qb-form-compact{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="admin-login-page" data-install-popup="on">
+<div class="network-banner" id="networkBanner"></div>
+
+<!-- ---------------------------- sign in ---------------------------- -->
+<div class="formbox admin-login-box" id="login"><div class="login-topbar"><a class="btn light login-home" href="/api/student-login">← Student Login</a><button id="install" class="install-btn login-install-button" type="button" aria-label="Install Gifted Brainz EduSpace"><img src="/assets/icon-192.png" alt="" aria-hidden="true"><span>Install App</span></button></div>
+  <img class="logo-full" src="/assets/logo-full.png" alt="Gifted Brainz EduSpace">
+  <h1>Admin Login</h1>
+  <p class="muted">Administrator access only. Sign in with your admin username and password.</p>
+  <form id="lf">
+    <div class="field"><label>Admin username</label><input id="username" type="text" autocomplete="username" required maxlength="80" placeholder="Admin username"></div>
+    <div class="field"><label>Admin password</label><input id="password" type="password" autocomplete="current-password" required maxlength="200"></div>
+    <button class="btn primary" style="width:100%">Log in</button>
+  </form>
+  <p id="lm"></p>
+
+</div>
+
+<!-- ---------------------------- console ---------------------------- -->
+<div id="panel" hidden>
+<div id="shell">
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title"><span class="ic">🛠️</span> <span id="viewTitle">Overview</span></div>
+      <div class="topbar-right"><span class="who">Administrator</span><button class="btn light" onclick="GB.logout()">Log out</button></div>
+    </div>
+    <div class="content">
+      <div id="msg"></div>
+
+      <!-- Overview -->
+      <section class="view" id="v-overview">
+        <div class="overview-stats-head"><div><span class="eyebrow">DASHBOARD OVERVIEW</span><h2>Platform Statistics</h2><p class="muted">A live snapshot of students, CBTs, learning materials, submissions and overall performance.</p></div></div><div class="statgrid" id="stats"><div class="statcard plain"><div class="ic">📊</div><strong>Loading…</strong><small>Platform statistics</small></div></div>
+        <div id="storageStatus" class="notice" hidden></div>
+        <div class="card"><div class="section-head"><h2>Leaderboard Controls</h2></div>
+          <p class="muted">Clear the general leaderboard or a single subject without deleting students’ CBT history or dashboard records.</p>
+          <div class="formgrid"><div class="field"><label for="lbSubject">Subject</label><select id="lbSubject"></select></div>
+            <div class="factions" style="align-items:end"><button class="btn danger" type="button" id="clearLbSubject">Clear subject leaderboard</button><button class="btn light" type="button" id="clearLbAll">Clear general leaderboard</button></div></div>
+          <p class="muted" id="lbStatus"></p></div>
+        <div class="card"><div class="section-head"><h2>Recent Results</h2></div><div id="recent"></div></div>
+      </section>
+
+      <!-- Results & Analytics -->
+      <section class="view" id="v-results" hidden><div class="card"><div class="section-head"><div><span class="eyebrow">ASSESSMENT HUB</span><h2>Results & Analytics</h2><p class="muted">See attempts, average score, pass rate and performance by assessment.</p></div><span class="factions"><button class="btn light" type="button" id="exportResultsBtn">⬇ Export CSV</button><button class="btn light" type="button" id="refreshResults">Refresh</button></span></div><div id="analyticsStats" class="statgrid"></div><div id="analyticsTests" class="list"></div></div></section>
+
+      <!-- Activations -->
+      <section class="view" id="v-activation" hidden>
+        <div class="card"><div class="section-head"><h2>Account Activation</h2></div>
+          <p class="muted">Enter a student's Product Key to activate the account directly. No activation code is generated or entered by the student.</p>
+          <form id="activationForm" class="formgrid">
+            <div class="field"><label for="activationProductKey">Product Key</label><input id="activationProductKey" required maxlength="80" placeholder="GBK-..."></div>
+            <button class="btn primary">Activate Student Account</button>
+          </form><div id="activationResult"></div>
+          <div class="divider"></div>
+          <h3>Deactivate an activated account</h3><p class="muted">Deactivation removes access reserved for activated students. The student is notified through EduSpace.</p>
+          <form id="deactivationForm" class="formgrid"><div class="field"><label for="deactivationProductKey">Product Key</label><input id="deactivationProductKey" required maxlength="80" placeholder="GBE-..."></div><button class="btn danger" type="submit">Deactivate Student Account</button></form><div id="deactivationResult"></div>
+        </div>
+      </section>
+
+      <!-- Students -->
+      <section class="view" id="v-students" hidden>
+        <div class="card">
+          <div class="section-head"><h2>Students</h2></div>
+          <p class="muted">Tap a student to see their full progress, subject by subject. Use <b>Verify &amp; reset password</b> after the student contacts the administrator and answers their security questions.</p>
+          <div id="studentsList"></div>
+        </div>
+        <div class="card" id="progressCard" hidden>
+          <div class="section-head"><h2 id="pTitle">Student progress</h2><button class="btn light" type="button" id="pClose">✕ Close</button></div>
+          <div id="progressBody"></div>
+        </div>
+      </section>
+
+      <!-- Gifted Brainz AI -->
+      <section class="view" id="v-ai" hidden>
+        <div class="card"><div class="section-head"><h2>🤖 Gifted Brainz AI — Question Generator</h2><span class="pill">Admin tool</span></div>
+          <p class="muted">Generate draft questions quickly, then review every question before saving or publishing it.</p>
+          <form id="aiGenForm" class="formgrid">
+            <div class="field"><label>Exam</label><input id="aiExam" value="UTME/JAMB" maxlength="80"></div>
+            <div class="field"><label>Subject</label><select id="aiSubject"></select></div>
+            <div class="field"><label>Topic</label><input id="aiTopic" maxlength="200" placeholder="e.g. Quadratic equations"></div>
+            <div class="field"><label>Number of questions</label><input id="aiCount" type="number" min="1" max="50" value="10"></div>
+            <div class="field"><label>Difficulty</label><select id="aiDifficulty"><option>mixed</option><option>easy</option><option>moderate</option><option>hard</option><option>very-hard</option></select></div>
+            <div class="field full"><label>Learning objective (optional)</label><input id="aiObjective" maxlength="500" placeholder="What should the questions assess?"></div>
+            <button class="btn primary" id="aiGenerateBtn">Generate Questions with Gifted Brainz AI →</button>
+          </form><p id="aiGenMsg" class="error"></p></div>
+        <div class="card" id="aiPreviewCard" hidden><div class="section-head"><h2>Review generated questions</h2><button class="btn light" type="button" id="aiQualityCheck">Run AI quality check</button><button class="btn light" type="button" id="aiSaveAll">Save reviewed questions to Question Bank</button></div><div id="aiPreview"></div></div>
+      </section>
+
+      <!-- Subjects, Collections and Student Registrations -->
+      <section class="view" id="v-subjects" hidden>
+        <div class="es-shell">
+          <div class="section-head"><div><span class="eyebrow">EDUSPACE CONTENT ARCHITECTURE</span><h2>Subjects &amp; Collections</h2><p class="muted">Subjects are the top-level student areas. Put any mix of notes, photos, videos and CBT assessments into collections.</p></div></div>
+          <div class="es-grid">
+            <div class="es-card">
+              <div class="section-head"><div><h3>Subject catalog</h3><small class="muted" id="esRegSubjectHint">Loading…</small></div></div>
+              <form id="esSubjectForm" class="formgrid">
+                <input type="hidden" id="esSubjectId">
+                <div class="field"><label>Subject name</label><input id="esSubjectName" maxlength="120" required placeholder="e.g. Economics"></div>
+                <div class="field"><label>Position</label><input id="esSubjectPosition" type="number" min="0" value="0"></div>
+                <div class="field full"><label>Subject icon</label><input type="hidden" id="esSelectedIcon" value="📘"><div id="esIconPicker" class="icon-picker"></div></div>
+                <div class="factions full"><button class="btn primary" type="submit" id="esSubjectSave">Add subject</button><button class="btn light" type="reset" onclick="setTimeout(()=>EduSpaceAdmin.renderIconPicker('📘'),0)">Clear form</button></div>
+              </form>
+              <div id="esSubjectList" style="margin-top:12px"></div>
+            </div>
+            <div class="es-card">
+              <div class="section-head"><div><h3>Collections</h3><small class="muted">Example: Mathematics → Integration</small></div><button class="btn light" type="button" id="esRefreshCollections">↻ Refresh</button></div>
+              <div class="field"><label>Subject</label><select id="esCollectionSubject"></select></div>
+              <form id="esCollectionForm" class="formgrid">
+                <div class="field"><label>New collection name</label><input id="esNewCollectionName" required maxlength="160" placeholder="e.g. Integration"></div>
+                <div class="field"><label>Sort mode</label><select id="esNewCollectionSort"><option value="manual">Manual drag order</option><option value="alphabetical">Alphabetical</option><option value="newest">Newest first</option></select></div>
+                <div class="field full"><label>Description</label><textarea id="esNewCollectionDescription" rows="2" placeholder="What should students find in this collection?"></textarea></div>
+                <button class="btn primary" type="submit">Create collection</button>
+              </form>
+              <div id="esCollectionList" style="margin-top:12px"></div>
+            </div>
+          </div>
+          <div class="es-card" id="esCollectionEditor" hidden>
+            <div class="section-head"><div><span class="eyebrow">COLLECTION EDITOR</span><h3 id="esCollectionEditorTitle">Manage collection</h3></div><button class="btn light" type="button" onclick="document.getElementById('esCollectionEditor').hidden=true">Close</button></div>
+            <div class="formgrid">
+              <div class="field"><label>Name</label><input id="esCollectionName"></div>
+              <div class="field"><label>Sort mode</label><select id="esCollectionSort"><option value="manual">Manual drag order</option><option value="alphabetical">Alphabetical</option><option value="newest">Newest first</option></select></div>
+              <div class="field full"><label>Description</label><textarea id="esCollectionDescription" rows="2"></textarea></div>
+              <label class="check"><input id="esCollectionPublished" type="checkbox" checked> Published for students</label>
+            </div>
+            <div class="es-toolbar" style="margin-top:10px"><select id="esAddMaterialSelect" style="min-width:260px"></select><select id="esAddCbtSelect" style="min-width:300px"></select><button class="btn primary" type="button" onclick="EduSpaceAdmin.saveCollection()">Save collection &amp; order</button></div>
+            <p class="muted">Drag the items into the exact order you want. Alphabetical/newest modes override manual drag order for students.</p>
+            <div id="esCollectionItems" class="es-item-list"></div>
+          </div>
+          <div class="es-grid">
+            <div class="es-card">
+              <div class="section-head"><div><h3>Add learning material</h3><small class="muted">Notes, photos, videos, audio and files</small></div></div>
+              <form id="esMaterialForm" class="formgrid">
+                <div class="field"><label>Subject</label><select id="esMaterialSubject"></select></div>
+                <div class="field"><label>Type</label><select id="esMaterialType"><option value="note">Note / article</option><option value="image">Image</option><option value="video">Video</option><option value="audio">Audio</option><option value="file">File</option><option value="mixed">Mixed</option></select></div>
+                <div class="field full"><label>Title</label><input id="esMaterialTitle" maxlength="200" required placeholder="e.g. Integration by substitution"></div>
+                <div class="field"><label>Topic</label><input id="esMaterialTopic" maxlength="200" placeholder="Optional topic"></div>
+                <div class="field"><label>Access</label><select id="esMaterialAccess"><option value="all">All registered students</option><option value="activated">Activated students</option></select></div>
+                <div class="field full"><label>Note content</label><textarea id="esMaterialBody" rows="7" placeholder="Type the lesson note, summary, examples or instructions here…"></textarea></div>
+                <div class="field full"><label>Upload files</label><input id="esMaterialFiles" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"><small class="muted">Large files go directly to the private EduSpace storage bucket using a short-lived signed upload URL.</small></div>
+                <label class="check"><input id="esMaterialPublished" type="checkbox" checked> Publish now</label>
+                <button class="btn primary" type="submit">Save material</button>
+              </form>
+            </div>
+            <div class="es-card">
+              <div class="section-head"><div><h3>Student subject registration</h3><small class="muted">Only an administrator can change a student's registered subjects after the initial signup.</small></div></div>
+              <form id="esRegistrationForm">
+                <div class="field"><label>Student</label><select id="esRegStudent"></select></div>
+                <div id="esRegSubjectList" class="es-student-registrations"><div class="es-empty">Choose a student.</div></div>
+                <button class="btn primary" type="submit" style="margin-top:10px">Save student subjects</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Materials -->
+      <section class="view" id="v-materials" hidden>
+        <div class="card">
+          <div class="section-head"><h2>Publish Learning Material</h2></div>
+          <form id="noteForm" class="formgrid">
+            <div class="field"><label>Title</label><input id="ntitle" required maxlength="200"></div>
+            <div class="field"><label>Subject session</label><select id="nsubject" required></select></div>
+            <div class="field"><label>Topic (optional)</label><input id="ntopic" maxlength="200"></div>
+            <div class="field full"><label>Note</label><div id="nbodyEditor"></div></div>
+            <div class="field full"><label>Attach files — pictures, videos, audio or documents</label>
+              <input id="nfiles" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.txt,.zip">
+              <small class="muted">Videos are uploaded in small pieces, so even a long lesson video goes through on a slow connection. Keep each file under 2 GB.</small>
+              <div id="nprog" class="upload-status" aria-live="polite"></div>
+              <div class="progress" id="nprogress" hidden><i id="nprogressBar" style="width:0%"></i></div></div>
+            <div class="field"><label>Access</label><select id="naccess"><option value="all">Everyone — all registered students</option><option value="activated">Activated Students Only 🔒</option></select></div><label class="check"><input id="npub" type="checkbox" checked> Publish immediately</label>
+            <button class="btn primary" id="saveMaterialBtn" type="submit">Save material</button>
+          </form>
+        </div>
+        <div class="card"><div class="section-head"><h2>Published Materials</h2></div><div id="notesList"></div></div>
+      </section>
+
+      <!-- CBTs -->
+      <section class="view" id="v-cbt" hidden>
+        <div class="assessment-hero card">
+          <div><span class="eyebrow">GIFTED BRAINZ ASSESSMENT HUB</span><h1>Build assessments with confidence.</h1><p>Create, organize, review and publish CBTs from one clean workspace. No test links. No result links. Students access everything inside EduSpace.</p></div>
+          <div class="assessment-kpis"><div><b id="cbtTotalKpi">0</b><span>Assessments</span></div><div><b id="cbtPublishedKpi">0</b><span>Published</span></div><div><b id="cbtQuestionKpi">0</b><span>Questions</span></div></div>
+        </div>
+        <div class="card assessment-builder">
+          <div class="section-head"><div><span class="eyebrow">STEP 1–5</span><h2>Create CBT</h2></div><span class="builder-badge">Question Builder • LaTeX • Preview</span></div>
+          <form id="testForm" class="formgrid">
+            <div class="field"><label>Assessment title</label><input id="ttitle" required maxlength="200" placeholder="e.g. UTME Mathematics Drill 01"></div>
+            <div class="field"><label>Subject</label><select id="tsubject" required></select></div>
+            <div class="field"><label>Duration (minutes)</label><input id="tduration" type="number" min="1" max="240" value="50" required></div>
+            <div class="field"><label>Access</label><select id="taccess"><option value="all">Everyone — all registered students</option><option value="activated">Activated Students Only 🔒</option></select></div>
+            <div class="field full"><label>Student instructions</label><textarea id="tinstructions" rows="4" maxlength="12000" placeholder="Write the instructions students should read before starting this assessment…"></textarea></div>
+            <div class="field full settings-panel">
+              <div class="settings-title"><b>Assessment settings</b><small>Keep the options simple. The server enforces attempt and access rules.</small></div>
+              <div class="settings-grid">
+                <label class="setting-toggle"><input id="toneAttempt" type="checkbox" checked><span><b>One Attempt</b><small>Student can submit this assessment only once.</small></span></label>
+                <label class="setting-toggle"><input id="tshuffleQ" type="checkbox" checked><span><b>Shuffle Questions</b><small>Change question order for each attempt.</small></span></label>
+                <label class="setting-toggle"><input id="tshuffleO" type="checkbox" checked><span><b>Shuffle Options</b><small>Change option order for each attempt.</small></span></label>
+                <label class="setting-toggle"><input id="tpub" type="checkbox" checked><span><b>Publish immediately</b><small>Make the assessment available after saving.</small></span></label>
+              </div>
+              <div class="field" style="margin-top:12px"><label>Result visibility</label><select id="tresultVisibility"><option value="immediate">Show result after submission</option><option value="held">Hold result until Admin releases it</option></select><small class="muted">When held, the student is notified automatically when you release the result. There is no result link.</small></div>
+              <div class="field"><label>Pass mark (%)</label><input id="tPassMark" type="number" min="0" max="100" step="1" value="50"><small class="muted">Used for pass/fail reporting.</small></div>
+              <div class="field full"><div class="section-head"><div><b>Student Information Form</b><small class="muted">Collect only the information you need before the CBT starts.</small></div><button class="btn light" type="button" id="addStudentField">＋ Add field</button></div><div id="studentFields"></div></div>
+            </div>
+            <div class="field full sections-builder card soft">
+              <div class="section-head"><div><b>Sections</b><small class="muted">Organize questions into clear sections. Useful for English passages and multi-part assessments.</small></div><button class="btn light" type="button" id="addAssessmentSection">＋ Add section</button></div>
+              <div id="assessmentSections"></div>
+            </div>
+            <div class="field full question-source-card card soft">
+              <div class="section-head"><div><b>Question source</b><small class="muted">Build from the reusable Question Bank, create manually, or import a document.</small></div><select id="tQuestionSource" style="max-width:280px"><option value="manual">Question Builder — manual</option><option value="bank">Question Bank — select a pool</option></select></div>
+              <div id="tBankBuilder" class="card soft" hidden>
+                <div class="formgrid"><div class="field"><label>Question-bank subject</label><select id="tBankSubject"></select></div><div class="field"><label>Number of questions</label><input id="tBankCount" type="number" min="1" max="1000" value="10"></div></div>
+                <div class="section-head"><div><b>Topics</b><small class="muted">Select one, several, or all topics.</small></div><button class="btn light" type="button" id="tBankSelectAll">Select All</button></div>
+                <div id="tBankTopics" class="panelgrid"><p class="muted">Loading topics…</p></div><p id="tBankPoolInfo" class="muted"></p>
+                <label class="check"><input id="tRandomizePool" type="checkbox" checked> Randomize the selected pool for each student</label>
+              </div>
+            </div>
+            <div class="field full import-card card soft"><div class="section-head"><div><b>Import questions</b><small class="muted">PDF, Word or text → extract → review → save.</small></div><button class="btn light" type="button" id="tImportBtn">Extract &amp; add</button></div><input id="tImportFile" type="file" accept=".pdf,.doc,.docx,.txt"><div id="tImportStatus" class="muted"></div><div id="tImportReport"></div></div>
+            <div class="field full ai-builder-card card soft">
+              <div class="section-head"><div><b>✨ Generate with Gifted Brainz AI</b><small class="muted">Questions are generated for this assessment's subject and dropped straight into the Question Builder below as editable drafts — review and correct them before saving.</small></div></div>
+              <div class="formgrid">
+                <div class="field"><label>Topic (optional)</label><input id="tAiTopic" maxlength="200" placeholder="Leave blank for broad coverage"></div>
+                <div class="field"><label>Number of questions</label><input id="tAiCount" type="number" min="1" max="25" value="5"></div>
+                <div class="field"><label>Difficulty</label><select id="tAiDifficulty"><option value="mixed">Mixed</option><option value="easy">Easy</option><option value="moderate">Moderate</option><option value="hard">Hard</option><option value="very-hard">Very hard</option></select></div>
+              </div>
+              <button class="btn primary" type="button" id="tAiGenerateBtn">Generate questions with AI →</button>
+              <p id="tAiMsg" class="muted" style="margin-top:8px"></p>
+            </div>
+            <div class="field full"><div class="section-head"><div><b>Question Builder</b><small class="muted">Use rich text and LaTeX-friendly content. Every question must have four options and a correct answer. AI-generated drafts appear here too — review every one before saving.</small></div><button class="btn primary" type="button" id="addQ">＋ Add question</button></div><div id="qs"></div></div>
+            <div class="field full builder-footer"><div><b>Ready to publish?</b><small class="muted">Preview the structure, then save. Published assessments appear inside Student EduSpace.</small></div><button class="btn primary" type="submit">Save Assessment</button></div>
+          </form>
+        </div>
+        <div class="card"><div class="section-head"><div><span class="eyebrow">MANAGE</span><h2>Assessment Library</h2></div><div class="filter-row"><select id="cbtStatusFilter"><option value="all">All</option><option value="published">Published</option><option value="draft">Drafts</option><option value="held">Results held</option></select></div></div><div id="testsList"></div></div>
+      </section>
+
+      <!-- Question Bank -->
+      <section class="view" id="v-bank" hidden>
+        <div class="qb-shell">
+          <div class="card qb-card">
+            <div class="section-head">
+              <div><h2>Question Bank</h2><small class="muted">Subject → Topic → Questions</small></div>
+            </div>
+            <form id="bankImportForm" class="qb-import-form">
+              <div class="field"><label>Subject</label><select id="bsubject"></select></div>
+              <div class="field"><label>Topic</label><div style="display:flex;gap:8px;align-items:center"><select id="btopic" style="flex:1"><option value="">Loading topics…</option></select><button class="btn light" type="button" id="refreshBTopics" title="Refresh topics">↻</button></div><small class="muted">Only topics belonging to the selected subject are shown.</small></div>
+              <div class="field"><label>Document</label><input id="bfile" type="file" accept=".pdf,.doc,.docx,.txt,.html,.htm"><small class="muted">Questions extracted from this document are added to the selected topic.</small></div>
+              <button class="btn primary" type="submit">Extract &amp; Add</button>
+            </form>
+            <small id="bprog" class="muted"></small>
+            <div id="bextract"></div>
+          </div>
+
+          <div class="qb-work-grid">
+            <div class="card qb-card">
+              <div class="section-head"><h3>Add a Question</h3></div>
+              <form id="bankManualForm" class="formgrid qb-form-compact">
+                <div class="field"><label>Subject</label><select id="bmSubject"></select></div>
+                <div class="field"><label>Topic</label><select id="bmTopic"><option value="">Uncategorized / Topic Not Assigned</option></select></div>
+                <div class="field"><label>Question type</label><select id="bmType"><option value="mcq">Multiple choice</option><option value="passage">Passage question</option></select></div>
+                <div class="field"><label>Passage group ID</label><input id="bmPassageId" placeholder="e.g. ENG-P03"></div>
+                <div class="field full"><label>Shared passage <span class="muted">(optional)</span></label><div id="bmPassage"></div></div>
+                <div class="field full"><label>Question</label><div id="bmQuestion"></div></div>
+                <div class="field full"><label>Question image <span class="muted">(optional)</span></label><input id="bmImage" type="file" accept="image/*"></div>
+                <div class="field"><label>Option A</label><input id="bmA" required></div>
+                <div class="field"><label>Option B</label><input id="bmB" required></div>
+                <div class="field"><label>Option C</label><input id="bmC" required></div>
+                <div class="field"><label>Option D</label><input id="bmD" required></div>
+                <div class="field"><label>Correct option</label><select id="bmAnswer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
+                <label class="check"><input id="bmRoman" type="checkbox"> Roman-numeral format (I–IV)</label>
+                <div class="field full"><label>Explanation <span class="muted">(optional)</span></label><textarea id="bmExplanation" rows="2" placeholder="Explain why the correct answer is right."></textarea></div>
+                <button class="btn primary" type="submit">Add to Question Bank</button>
+              </form>
+            </div>
+
+            <div class="qb-side-stack">
+              <div class="card qb-card">
+                <div class="section-head"><div><h3>Topics</h3><small class="muted">Create and manage topics</small></div><button class="btn light" type="button" id="addTopicBtn">＋ Add Topic</button></div>
+                <div class="field"><label>Subject</label><select id="topicSubject"></select></div>
+                <div class="field"><label>New topic</label><input id="topicName" maxlength="200" placeholder="e.g. Algebra"></div>
+                <div id="topicList" style="margin-top:8px"></div>
+              </div>
+
+              <div class="card qb-card">
+                <div class="section-head"><h3>Question Reports</h3></div>
+                <div class="qb-form-compact">
+                  <div class="field"><label>Status</label><select id="reportStatus"><option value="">All</option><option>Pending</option><option>Reviewed</option><option>Resolved</option><option>Dismissed</option></select></div>
+                  <div class="field"><label>Subject</label><select id="reportSubject"></select></div>
+                  <div class="field full"><label>Search</label><input id="reportSearch" placeholder="Student, question, topic or reason…"></div>
+                </div>
+                <div class="factions" style="margin-top:8px"><button class="btn light" type="button" id="loadReportsBtn">Refresh</button></div>
+                <div id="reportsList" style="margin-top:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card qb-card">
+            <div class="section-head">
+              <div><h3>Banked Questions</h3><small class="muted" id="bankCount"></small></div>
+              <div class="qb-list-toolbar">
+                <select id="bankFilter"></select>
+                <select id="bankTopicFilter"><option value="">All topics</option></select>
+                <select id="bankReviewFilter"><option value="">All questions</option><option value="review">Needs answer review</option><option value="ready">Ready</option></select>
+              </div>
+            </div>
+            <div id="bankList"></div>
+          </div>
+
+          <div class="card qb-card">
+            <div class="section-head"><h3>Clear Subject Question Bank</h3></div>
+            <div class="formgrid qb-form-compact">
+              <div class="field"><label>Subject</label><select id="clearBankSubject"></select></div>
+              <button class="btn danger" type="button" id="clearBankBtn">Clear Subject Bank</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+<!-- Announcements -->
+      <section class="view" id="v-ann" hidden>
+        <div class="card">
+          <div class="section-head"><h2 id="annFormTitle">Post Announcement</h2></div>
+          <form id="annForm" class="formgrid">
+            <input type="hidden" id="aeditId" value="">
+            <div class="field full"><label>Title</label><input id="atitle" required maxlength="200"></div>
+            <div class="field full"><label>Message — use bold, italic, lists, emojis and links</label><div id="abodyEditor"></div></div>
+            <div class="field full"><label>Attach pictures, videos, audio or files</label>
+              <input id="afiles" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.txt,.zip">
+              <small class="muted">Videos upload in small pieces so they work on mobile data. When editing, use Remove beside any old file you no longer want.</small>
+              <div id="aExistingMedia" class="filelist"></div><small class="muted" id="aprog"></small></div>
+            <label class="check"><input id="apub" type="checkbox" checked> Publish immediately</label>
+            <div class="factions">
+              <button class="btn primary" id="annSubmit">Post announcement</button>
+              <button class="btn light" type="button" id="annCancelEdit" hidden>Cancel edit</button>
+            </div>
+          </form>
+        </div>
+        <div class="card"><div class="section-head"><h2>Previous Announcements</h2><button class="btn light" type="button" id="annRefresh">↻ Refresh</button></div>
+          <p class="muted">Everything you have ever posted is listed here. You can edit the wording, publish or unpublish it, or delete it altogether.</p>
+          <div id="annList"></div></div>
+      </section>
+
+      <!-- Feedback & ratings -->
+      <section class="view" id="v-feedback" hidden>
+        <div class="card">
+          <div class="section-head"><h2>Feedback &amp; Ratings</h2><button class="btn light" type="button" id="fbRefresh">↻ Refresh</button></div>
+          <p class="muted">What students think of the platform and the app, plus any complaint they have lodged.</p>
+          <div id="fbSummary"></div>
+        </div>
+        <div class="card">
+          <div class="section-head"><h2>Messages from students</h2>
+            <div class="filters"><select id="fbFilter"><option value="">Everything</option><option value="complaint">Complaints only</option><option value="feedback">Feedback only</option><option value="suggestion">Suggestions only</option><option value="open">Not yet handled</option></select></div>
+          </div>
+          <div id="fbList"></div>
+        </div>
+      </section>
+
+      <!-- Admin security -->
+      <section class="view" id="v-account" hidden>
+        <div class="card admin-security-card">
+          <div class="section-head"><div><span class="eyebrow">Secure configuration</span><h2>Admin Security</h2></div><span class="pill">Environment managed</span></div>
+          <p class="muted">Administrator credentials are deliberately stored only in the Admin Portal server environment. They are never written to the shared student database, browser storage, frontend code or ZIP package.</p>
+          <div class="kv" id="adminSecurityKv"><div><small>Admin username</small><b id="curUsername">—</b></div><div><small>Admin email</small><b id="curEmail">—</b></div><div><small>Credential storage</small><b>Admin server environment</b></div><div><small>Shared authentication</small><b>AUTH_SECRET</b></div></div>
+          <div class="notice">To change the administrator username, password or email, update <b>ADMIN_USERNAME</b>, <b>ADMIN_PASSWORD</b> or <b>ADMIN_EMAIL</b> in the Admin hosting environment and redeploy the Admin function. This prevents credentials from being persisted in application data.</div>
+        </div>
+        <div class="card critical-box" style="margin-top:14px">
+          <div class="section-head"><div><span class="eyebrow">DESTRUCTIVE ACTION</span><h2>Reset Entire Platform</h2></div><span class="pill">Cannot be undone</span></div>
+          <p class="muted">Delete registered/activated student accounts, CBTs, attempts/results, question-bank content, learning materials, collections and subject registrations. The schema and the five core subject placeholders are retained.</p>
+          <button class="btn danger" type="button" id="esResetPlatformBtn">Reset entire platform</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="/admin-config.js"></script><script>window.GB_API_BASE=window.GB_API_BASE||"";window.GB_LOGOUT_URL="/admin.html";</script><script src="/app.js?v=12.0.18-eduspace"></script><script src="/api.js?v=12.0.18-eduspace"></script><script src="/gb-ui.js?v=12.0.18-eduspace"></script><script src="/eduspace-admin.js?v=12.0.18"></script>
+<script>
+const $=id=>document.getElementById(id);
+const SUBJECTS=GBUI.SUBJECTS;
+const fillAdminSubjectSelectors=()=>{
+  fillSubjectSelect("nsubject");
+  fillSubjectSelect("tsubject");
+  fillSubjectSelect("bsubject");
+  fillSubjectSelect("bmSubject");
+  fillSubjectSelect("clearBankSubject");
+  fillSubjectSelect("bankFilter",{allLabel:"All subjects"});
+  fillSubjectSelect("topicSubject");
+  fillSubjectSelect("reportSubject",{allLabel:"All subjects"});
+  fillSubjectSelect("aiSubject");
+  if($("topicSubject") && !$("topicSubject").value) $("topicSubject").value=SUBJECTS[0];
+  if($("bsubject") && !$("bsubject").value) $("bsubject").value=SUBJECTS[0];
+  if($("bmSubject") && !$("bmSubject").value) $("bmSubject").value=SUBJECTS[0];
+ };
+window.addEventListener("gb:subjects-updated",()=>{
+  fillAdminSubjectSelectors();
+  window.EduSpaceAdmin?.renderCollectionSubjectSelectors?.();
+  window.EduSpaceAdmin?.refreshCollections?.().catch?.(()=>{});
+});
+
+const say=(t,cls="ok")=>{$("msg").innerHTML=`<p class="${cls}">${GBUI.esc(t)}</p>`;setTimeout(()=>{$("msg").innerHTML=""},6000)};
+
+/* ------------------------- admin side menu ------------------------- */
+const VIEW_GROUPS=[
+  {title:"Overview",items:[{id:"overview",icon:"📊",label:"Overview",desc:"Key numbers at a glance"}]},
+  {title:"Students",items:[
+    {id:"students",icon:"👥",label:"Students & Progress",desc:"Progress and password resets"},
+    {id:"activation",icon:"🔓",label:"Account Activation",desc:"Activate students by Product Key"}]},
+  {title:"AI & Teaching",items:[{id:"ai",icon:"🤖",label:"Gifted Brainz AI",desc:"Generate and check questions"}]},
+  {title:"Assessment & Content",items:[
+    {id:"results",icon:"🏆",label:"Results & Analytics",desc:"Performance, pass rates and CBT results"},
+    {id:"subjects",icon:"🗂️",label:"Subjects & Collections",desc:"Subjects, icons, collections and registrations"},
+    {id:"bank",icon:"🧠",label:"Question Bank",desc:"Questions, topics, extraction & reports"},
+    {id:"cbt",icon:"🎯",label:"CBT Tests",desc:"Create and manage tests"},
+    {id:"ann",icon:"📢",label:"Announcements",desc:"Post, edit or delete announcements"}]},
+  {title:"Communication",items:[{id:"feedback",icon:"⭐",label:"Feedback & Ratings",desc:"Student ratings and complaints"}]},
+  {title:"Admin",items:[{id:"account",icon:"🔐",label:"Admin Security",desc:"Environment-managed credentials"}]}
+];
+const VIEWS=VIEW_GROUPS.flatMap(group=>group.items);
+
+function mountAdminShell(){
+  const host=$("shell");
+  host.classList.add("shell");
+  const main=host.querySelector(".main");
+  host.insertAdjacentHTML("afterbegin",`
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin navigation menu" aria-controls="sidebar" aria-expanded="false">☰ Menu</button>
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="sidebar" id="sidebar">
+      <a class="side-brand" href="/admin.html">
+        <img class="logo-transparent" src="/assets/icon-light.png" alt="Gifted Brainz EduSpace">
+        <span>Admin Console<br><small>Gifted Brainz</small></span>
+      </a>
+      <nav class="sidenav" aria-label="Admin menu">${VIEW_GROUPS.map(g=>`<div class="nav-group"><div class="nav-group-title">${GBUI.esc(g.title)}</div>${g.items.map(v=>`
+         <a href="#${v.id}" data-view="${v.id}"><span class="ic" aria-hidden="true">${v.icon}</span>
+         <span class="nav-text"><span class="lbl">${GBUI.esc(v.label)}</span><small>${GBUI.esc(v.desc)}</small></span><span class="nav-badge" data-badge="${v.id}" hidden></span></a>`).join("")}</div>`).join("")}
+         <div class="nav-group"><div class="nav-group-title">Portal</div>
+           <a href="/api/student-login"><span class="ic" aria-hidden="true">🏠</span><span class="nav-text"><span class="lbl">Student View</span><small>Open the student portal</small></span></a>
+         </div>
+       </nav>
+      <div class="side-foot">Gifted Brainz EduSpace<br>Admin console</div>
+    </aside>`);
+  host.appendChild(main);
+  const sb=$("sidebar"), scrim=$("scrim");
+  $("menuToggle").onclick=()=>{const open=!sb.classList.contains("open");sb.classList.toggle("open",open);scrim.hidden=!open;$("menuToggle").setAttribute("aria-expanded",String(open));if(open)sb.querySelector("a")?.focus()};
+  scrim.onclick=()=>{sb.classList.remove("open");scrim.hidden=true};
+  sb.addEventListener("click",e=>{const a=e.target.closest("[data-view]");if(!a)return;e.preventDefault();show(a.dataset.view);sb.classList.remove("open");scrim.hidden=true});
+}
+
+function show(id){
+  if(!VIEWS.some(v=>v.id===id)) id="overview";
+  VIEWS.forEach(v=>{const el=$("v-"+v.id); if(el) el.hidden=v.id!==id});
+  document.querySelectorAll("[data-view]").forEach(a=>a.classList.toggle("active",a.dataset.view===id));
+  const v=VIEWS.find(v=>v.id===id);
+  $("viewTitle").textContent=v?v.label:"Overview";
+  location.hash=id;
+  if(id==="results") resultsAnalytics().catch(()=>{});
+  if(id==="subjects" && window.EduSpaceAdmin){ window.EduSpaceAdmin.loadSubjects().catch(err=>say(err.message,"error")); window.EduSpaceAdmin.loadStudentsForRegistration().catch(err=>say(err.message,"error")); }
+}
+function badge(view,count){
+  const el=document.querySelector(`[data-badge="${view}"]`);
+  if(!el) return;
+  el.textContent=count>99?"99+":String(count);
+  el.hidden=!count;
+}
+
+/* --------------------------- rich text editor --------------------------- */
+/* A small toolbar over a contenteditable box: bold, italic, underline,
+   headings, lists, quotes, links and emojis.
+
+   Why the mousedown/preventDefault dance below matters: pressing a toolbar
+   button used to move focus out of the editable area first, which collapsed
+   the text selection. document.execCommand then had nothing to work on, so
+   Bold, Italic and friends appeared to do nothing at all. Blocking the default
+   mousedown keeps the caret and selection exactly where the admin left them,
+   and the saved range is restored as a second safety net. */
+const EMOJIS=["😀","😊","👍","🙏","🎉","🔥","✅","❗","⚠️","📌","📚","✏️","🧠","🏆","⏰","💡","❤️","⭐","📢","🎯"];
+function editor(host, placeholder){
+  const box=document.createElement("div");
+  box.className="rte";
+  box.innerHTML=`
+    <div class="rte-tools">
+      <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+      <button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+      <button type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+      <button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+      <button type="button" data-cmd="superscript" title="Superscript">x²</button>
+      <button type="button" data-cmd="subscript" title="Subscript">x₂</button>
+      <span class="sep"></span>
+      <button type="button" data-block="h3" title="Heading">H</button>
+      <button type="button" data-block="p" title="Normal text">¶</button>
+      <button type="button" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+      <button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+      <button type="button" data-block="blockquote" title="Quote">❝</button>
+      <span class="sep"></span>
+      <button type="button" data-link="1" title="Insert link">🔗 Link</button>
+      <button type="button" data-media="image" title="Insert picture">🖼️ Picture</button>
+      <button type="button" data-media="video" title="Insert video">🎥 Video</button>
+      <button type="button" data-media="audio" title="Insert audio">🔊 Audio</button>
+      <button type="button" data-emoji="1" title="Insert emoji">🙂 Emoji</button>
+      <span class="sep"></span>
+      <button type="button" data-cmd="removeFormat" title="Clear formatting">✕ Clear</button>
+    </div>
+    <div class="emoji-pad" hidden>${EMOJIS.map(e=>`<button type="button" data-e="${e}">${e}</button>`).join("")}</div>
+    <div class="rte-area" contenteditable="true" data-ph="${placeholder||"Write here…"}"></div>`;
+  host.appendChild(box);
+  const area=box.querySelector(".rte-area");
+  const pad=box.querySelector(".emoji-pad");
+  const tools=box.querySelector(".rte-tools");
+
+  // Produce <b>/<i> tags rather than inline styles: the app's sanitiser keeps
+  // tags, so formatting written here survives a round-trip to the server.
+  try{ document.execCommand("styleWithCSS",false,false); }catch{}
+
+  let saved=null;
+  const embedded=[];
+  const insideArea=node=>node && (node===area || area.contains(node.nodeType===3?node.parentNode:node));
+  function remember(){
+    const sel=window.getSelection();
+    if(sel && sel.rangeCount && insideArea(sel.getRangeAt(0).commonAncestorContainer)) saved=sel.getRangeAt(0).cloneRange();
+  }
+  function restore(){
+    const sel=window.getSelection();
+    if(saved){ sel.removeAllRanges(); sel.addRange(saved); return; }
+    // Nothing was selected yet: put the caret at the end of the box.
+    area.focus();
+    const r=document.createRange(); r.selectNodeContents(area); r.collapse(false);
+    sel.removeAllRanges(); sel.addRange(r);
+  }
+  ["keyup","mouseup","input","focus"].forEach(ev=>area.addEventListener(ev,remember));
+  document.addEventListener("selectionchange",()=>{ remember(); syncState(); });
+
+  function run(fn){
+    area.focus();
+    restore();
+    fn();
+    remember();
+    syncState();
+    area.dispatchEvent(new Event("input",{bubbles:true}));
+  }
+  // Keeping focus inside the editable area is the whole fix.
+  tools.addEventListener("mousedown",e=>{ if(e.target.closest("button")) e.preventDefault(); });
+  pad.addEventListener("mousedown",e=>{ if(e.target.closest("button")) e.preventDefault(); });
+
+  async function insertMedia(kind){
+    const accept = kind === "image" ? "image/*" : kind === "video" ? "video/*" : "audio/*";
+    const input=document.createElement("input");
+    input.type="file"; input.accept=accept; input.style.display="none";
+    document.body.appendChild(input);
+    input.addEventListener("change",async()=>{
+      const file=input.files && input.files[0];
+      if(!file){input.remove();return;}
+      try{
+        const up=await GB.upload(file);
+        const key=String(up.fileKey||"");
+        if(!key) throw new Error("The media upload did not return a file key.");
+        const safeName=GB.esc(file.name);
+        embedded.push({key,fileName:up.fileName||file.name,contentType:up.contentType||file.type,size:up.size||file.size});
+        run(()=>{
+          const tag = kind === "image"
+            ? `<img data-gb-file="${GB.esc(key)}" alt="${safeName}" title="${safeName}">`
+            : kind === "video"
+              ? `<video data-gb-file="${GB.esc(key)}" controls playsinline preload="metadata"></video>`
+              : `<audio data-gb-file="${GB.esc(key)}" controls preload="metadata"></audio>`;
+          document.execCommand("insertHTML",false,tag+"<p><br></p>");
+        });
+      }catch(err){say(err.message||"Media upload failed.","error")}
+      finally{input.remove();}
+    },{once:true});
+    input.click();
+  }
+
+  tools.addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    e.preventDefault();
+    if(b.dataset.cmd) run(()=>document.execCommand(b.dataset.cmd,false,null));
+    else if(b.dataset.block) run(()=>document.execCommand("formatBlock",false,b.dataset.block==="p"?"p":b.dataset.block));
+    else if(b.dataset.media){ insertMedia(b.dataset.media); }
+    else if(b.dataset.emoji){ pad.hidden=!pad.hidden; }
+    else if(b.dataset.link){
+      const url=prompt("Paste the link (it will be clickable for students):","https://");
+      if(url && /^(https?:\/\/|mailto:|tel:)/i.test(url)) run(()=>document.execCommand("createLink",false,url));
+      else if(url) alert("Please use a link that starts with http:// or https://");
+    }
+  });
+  pad.addEventListener("click",e=>{
+    const b=e.target.closest("[data-e]"); if(!b) return;
+    e.preventDefault();
+    run(()=>document.execCommand("insertText",false,b.dataset.e));
+  });
+
+  // Highlight whichever styles apply where the caret currently sits.
+  function syncState(){
+    if(!area.isConnected) return;
+    tools.querySelectorAll("[data-cmd]").forEach(b=>{
+      let on=false;
+      try{ on=document.queryCommandState(b.dataset.cmd); }catch{}
+      b.classList.toggle("on",!!on);
+    });
+  }
+
+  // Keyboard shortcuts, so Ctrl/Cmd+B works even where the browser ignores it.
+  area.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey)) return;
+    const map={b:"bold",i:"italic",u:"underline"};
+    const cmd=map[e.key.toLowerCase()];
+    if(!cmd) return;
+    e.preventDefault();
+    run(()=>document.execCommand(cmd,false,null));
+  });
+
+  // Enter always creates a new paragraph/line inside the editor.
+  // Do not let an enclosing <form> treat Enter as submission.
+  area.addEventListener("keydown",e=>{
+    if(e.key !== "Enter" || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    restore();
+    try{
+      const ok=document.execCommand("insertParagraph",false,null);
+      if(!ok) document.execCommand("insertHTML",false,"<p><br></p>");
+    }catch{
+      document.execCommand("insertHTML",false,"<p><br></p>");
+    }
+    remember();
+    syncState();
+    area.dispatchEvent(new Event("input",{bubbles:true}));
+  });
+
+  // Pasted content comes in as plain text so stray styling never breaks the layout.
+  area.addEventListener("paste",e=>{
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData("text/plain");
+    run(()=>document.execCommand("insertText",false,text));
+  });
+
+  return {
+    get(){ const html=area.innerHTML.trim(); return (html==="<br>"||html==="<p><br></p>")?"":html; },
+    set(html){ area.innerHTML=html||""; saved=null; },
+    clear(){ area.innerHTML=""; saved=null; },
+    focus(){ area.focus(); },
+    getEmbedded(){ return embedded.map(x=>({...x})); }
+  };
+}
+
+/* ------------------------------- sign in ------------------------------- */
+$("lf").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const m=$("lm"); m.className=""; m.textContent="Checking your details…";
+  try{
+    const j=await GB.api("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username:$("username").value,password:$("password").value})});
+    m.className="ok"; m.textContent="Welcome back.";
+    start();
+  }catch(err){m.className="error";m.textContent=err.message}
+});
+
+/* ------------------------------- boot --------------------------------- */
+function fillSubjectSelect(id,{allLabel=""}={}){
+  const el=$(id); if(!el)return;
+  const current=el.value;
+  el.innerHTML=(allLabel?`<option value="">${GBUI.esc(allLabel)}</option>`:"")+SUBJECTS.map(s=>`<option value="${GBUI.esc(s)}">${GBUI.esc(s)}</option>`).join("");
+  if(current && [...el.options].some(o=>o.value===current)) el.value=current;
+}
+let nbody,abody,bmQuestion,bmPassage,wired=false;
+async function start(){
+  document.body.classList.remove("admin-login-page");
+  $("login").hidden=true; $("panel").hidden=false;
+  if(!document.getElementById("sidebar")) mountAdminShell();
+  if(window.EduSpaceAdmin) await window.EduSpaceAdmin.loadSubjects().catch(err=>say(err.message,"error"));
+  window.EduSpaceAdmin?.renderCollectionSubjectSelectors?.();
+  fillAdminSubjectSelectors();
+  if(!wired){
+    wired=true;
+    nbody=editor($("nbodyEditor"),"Type the note. Links you paste become clickable for students.");
+    abody=editor($("abodyEditor"),"Type your announcement. Bold, italic, lists, emojis and links all work.");
+    fillSubjectSelect("nsubject");
+    fillSubjectSelect("tsubject");
+    addAssessmentSection("General");
+    addQuestion();
+    if($("studentFields")&&!$("studentFields").children.length) addStudentField({key:"full_name",label:"Full Name",type:"text",required:true,leaderboard:true});
+    $("addStudentField")?.addEventListener("click",()=>addStudentField());
+    bmQuestion=editor($("bmQuestion"),"Write the question. Formatting, superscript and subscript are available.");
+    bmPassage=editor($("bmPassage"),"Optional shared passage…");
+    // Subject selectors are populated once by fillAdminSubjectSelectors(); do not append duplicate options here.
+    $("tduration").value="40";
+    wire();
+  }
+  show((location.hash||"#overview").slice(1));
+  initLeaderboardControls();
+  $("refreshResults")?.addEventListener("click",resultsAnalytics);
+  $("exportResultsBtn")?.addEventListener("click",()=>{
+    if(!lastResultsExport.length){say("There are no results to export yet.","error");return}
+    const headers=["Student name","Username","Assessment","Subject","Score (%)","Pass mark (%)","Passed","Correct","Wrong","Unanswered","Date"];
+    const csvEscape=v=>{const s=String(v??"");return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+    const lines=[headers.join(",")].concat(lastResultsExport.map(r=>[r.studentName,r.studentUsername,r.testTitle,r.subject,r.score,r.passMark,Number(r.score||0)>=(Number(r.passMark)||50)?"Yes":"No",r.correct,r.wrong,r.unanswered,r.date].map(csvEscape).join(",")));
+    const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=`gifted-brainz-results-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    say(`Exported ${lastResultsExport.length} result${lastResultsExport.length===1?"":"s"}.`);
+  });
+  resultsAnalytics().catch(()=>{});
+  await Promise.allSettled([overview(),students(),notes(),tests(),bank(),anns(),feedback(),account(),update()]);
+  await Promise.all([
+    loadTopicsUI().catch(()=>{}),
+    refreshTopicSelector("btopic",$("bsubject")?.value || SUBJECTS[0]).catch(()=>{}),
+    refreshTopicSelector("bmTopic",$("bmSubject")?.value || SUBJECTS[0]).catch(()=>{}),
+    loadReports().catch(()=>{})
+  ]);
+}
+GB.api("/api/admin/session").then(()=>start()).catch(()=>{});
+
+/* ----------------------------- overview ------------------------------- */
+async function overview(){
+  const renderStats = (o={}) => {
+    const n=(v,suffix="")=>v===null||v===undefined?"—":`${v}${suffix}`;
+    $("stats").innerHTML=[
+      ["👥",n(o.students),"Registered students"],
+      ["🟢",n(o.activeStudents ?? (o.students!==undefined?o.students:null)),"Active accounts"],
+      ["🔓",n(o.activatedStudents),"Activated students"],
+      ["⛔",n(o.inactiveStudents ?? o.deactivatedStudents),"Inactive/deactivated"],
+      ["🎯",o.publishedTests===null||o.tests===null?"—":`${o.publishedTests ?? "—"}/${o.tests ?? "—"}`,"Published CBTs"],
+      ["🧠",n(o.questionBank),"Question Bank"],
+      ["📚",n(o.notes),"Materials"],["📢",n(o.announcements),"Announcements"],
+      ["📝",n(o.results),"Submissions"],["📈",n(o.averageScore,"%"),"Average score"],
+      ["⭐",n(o.rating,"/5"),"App rating"]
+    ].map(([i,v,l])=>`<div class="statcard plain"><div class="ic">${i}</div><strong>${GBUI.esc(v)}</strong><small>${l}</small></div>`).join("");
+  };
+  let o;
+  try {
+    o = await GB.api("/api/admin/overview");
+  } catch (overviewErr) {
+    // First verify the shared backend. If the server-to-server path itself is
+    // unavailable, do not fan out into seven independent failing requests and
+    // mislabel a transport/configuration problem as a database outage.
+    let backendHealth=null;
+    try { backendHealth=await GB.api("/api/admin/backend-health"); } catch (healthErr) {
+      const msg=healthErr?.message||"The shared backend could not be reached.";
+      const isCentral=/central database/i.test(msg);
+      renderStats({students:null,activeStudents:null,activatedStudents:null,inactiveStudents:null,tests:null,publishedTests:null,questionBank:null,notes:null,announcements:null,results:null,averageScore:null,rating:null});
+      const storageEl=$("storageStatus");
+      if(storageEl){
+        storageEl.hidden=false;
+        storageEl.className="notice error";
+        storageEl.innerHTML=`<b>${isCentral?"Central database unavailable:":"Shared backend unavailable:"}</b> ${GBUI.esc(msg)}`;
+      }
+      return;
+    }
+    // Rebuild only after the shared backend health probe succeeds.
+    const paths=[
+      ["students","/api/admin/students"],["tests","/api/admin/tests"],["notes","/api/admin/notes"],
+      ["announcements","/api/admin/announcements"],["results","/api/admin/results"],["questionBank","/api/admin/question-bank"],
+      ["feedback","/api/admin/feedback"]
+    ];
+    const settled=await Promise.all(paths.map(async ([key,path])=>{
+      try { const value=await GB.api(path); return [key,Array.isArray(value)?value:(Array.isArray(value?.items)?value.items:[]),true,null]; }
+      catch (err) { return [key,[],false,err?.message||"Request failed."]; }
+    }));
+    const data=Object.fromEntries(settled.map(([key,value])=>[key,value]));
+    const failures=settled.filter(x=>!x[2]);
+    const allReadsSucceeded=failures.length===0;
+    const readOrNull=(key)=>settled.find(x=>x[0]===key)?.[2] ? data[key] : null;
+    const students=readOrNull("students"), tests=readOrNull("tests"), notes=readOrNull("notes"), anns=readOrNull("announcements"), results=readOrNull("results"), bank=readOrNull("questionBank"), feedback=readOrNull("feedback");
+    const rated=(feedback||[]).filter(f=>Number(f?.rating)>0);
+    o={
+      students:students?.length ?? null,
+      activeStudents:students ? students.filter(s=>s?.status==="active").length : null,
+      deactivatedStudents:students ? students.filter(s=>s?.activated===false).length : null,
+      tests:tests?.length ?? null, publishedTests:tests ? tests.filter(t=>t?.published).length : null, notes:notes?.length ?? null,
+      announcements:anns?.length ?? null, results:results?.length ?? null, questionBank:bank?.length ?? null,
+      averageScore:results ? (results.length?Math.round(results.reduce((sum,r)=>sum+Number(r?.score||0),0)/results.length):0) : null,
+      rating:feedback ? (rated.length?Math.round(rated.reduce((sum,r)=>sum+Number(r.rating||0),0)/rated.length*10)/10:0) : null,
+      storage:{persistent:allReadsSucceeded,backend:allReadsSucceeded?"central-data-rebuild":"unavailable",available:allReadsSucceeded,storageUnavailable:!allReadsSucceeded,notes:allReadsSucceeded?["Aggregate overview was unavailable; counters were rebuilt from live Admin resources."]:["One or more live Admin resource reads failed: "+failures.map(x=>`${x[0]}: ${x[3]}`).join(" | ")]},
+      overviewWarning: overviewErr?.message || "The aggregate overview endpoint could not be loaded; counters were rebuilt from individual Admin resources."
+    };
+    renderStats(o);
+  }
+  if(o){
+    renderStats(o);
+    const st=o.storage||{};
+    const storageEl=$("storageStatus");
+    if(storageEl){
+      const unavailable=st.storageUnavailable===true || (st.persistent!==true && st.backend==="unavailable");
+      storageEl.hidden=!unavailable;
+      if(unavailable){
+        storageEl.className="notice error";
+        const isDb=st.storageUnavailable===true;
+        storageEl.innerHTML=`<b>${isDb?"Central database unavailable:":"Central storage check incomplete:"}</b> ${GBUI.esc((st.notes||[]).join(" ")||"The shared backend could not be verified.")}${isDb?" Student registrations, verification requests and admin changes are blocked until central storage is restored.":""}`;
+      }
+    }
+  }
+  try{
+    const r=await GB.api("/api/admin/results");
+    $("recent").innerHTML=r.length?r.slice(0,10).map(x=>`<div class="adminrow"><span class="nm"><b>${GBUI.esc(x.studentName||"Unknown student")}</b><small>${GBUI.esc(x.studentUsername||"")} • ${GBUI.esc(x.testTitle||"")}</small></span><span class="sc g-${GBUI.GRADE(x.score).band}">${x.score}% <small>${GBUI.GRADE(x.score).emoji}</small></span><span class="tc">${new Date(x.date||Date.now()).toLocaleDateString()}</span></div>`).join(""):'<p class="muted">No submissions yet.</p>';
+  }catch(err){ $("recent").innerHTML=`<p class="error">Could not load recent results: ${GBUI.esc(err.message||"The request could not be completed.")}</p>`; }
+}
+
+let lastResultsExport=[];
+async function resultsAnalytics(){const rows=await GB.api("/api/admin/results");lastResultsExport=rows;const total=rows.length,avg=total?Math.round(rows.reduce((a,r)=>a+Number(r.score||0),0)/total):0;const pass=total?Math.round(rows.filter(r=>Number(r.score||0)>=(Number(r.passMark)||50)).length/total*100):0;$("analyticsStats").innerHTML=[["📝",total,"Attempts"],["📈",avg+"%","Average score"],["🎯",pass+"%","Pass rate"],["🏆",new Set(rows.map(r=>r.testId)).size,"Assessments attempted"]].map(x=>`<div class="statcard plain"><div class="ic">${x[0]}</div><strong>${GBUI.esc(x[1])}</strong><small>${x[2]}</small></div>`).join("");const groups=new Map();rows.forEach(r=>{const g=groups.get(r.testId)||{title:r.testTitle||"Assessment",subject:r.subject||"",rows:[]};g.rows.push(r);groups.set(r.testId,g)});$("analyticsTests").innerHTML=[...groups.values()].map(g=>{const a=g.rows,avg=Math.round(a.reduce((s,r)=>s+Number(r.score||0),0)/a.length),pm=Number(a[0]?.passMark)||50,pr=Math.round(a.filter(r=>Number(r.score||0)>=pm).length/a.length*100);return `<div class="adminrow"><span class="nm"><b>${GBUI.esc(g.title)}</b><small>${GBUI.esc(g.subject)} • ${a.length} attempt${a.length===1?'':'s'} • Pass ${pm}%</small></span><span class="sc">${avg}% avg</span><span class="tc">${pr}% pass</span></div>`}).join("")||'<p class="muted">No submitted assessments yet.</p>'}
+/* ----------------------------- students ------------------------------- */
+async function students(){
+  const list=await GB.api("/api/admin/students");
+  $("studentsList").innerHTML=list.length?list.map(s=>`<div class="adminrow click" data-student="${GBUI.esc(s.id)}">
+      <span class="nm"><b>${GBUI.esc(s.name)}</b><small>${GBUI.esc(s.username)} • ${GBUI.esc(s.email||"")} • ${(s.selectedSubjects||[]).map(GBUI.esc).join(", ")||"No subjects assigned"}</small>
+        </span>
+      <span class="sc">${s.average}%</span><span class="tc">${s.tests} test${s.tests===1?"":"s"}</span><span class="tc">${s.activated?"🟢 Activated":"⚪ Not activated"}</span>
+      <span class="factions">
+        <button class="btn light" type="button" data-edit-subjects="${GBUI.esc(s.id)}" data-name="${GBUI.esc(s.name)}" data-subjects="${GBUI.esc((s.selectedSubjects||[]).join(","))}">📘 Subjects</button>
+        <button class="btn light" type="button" data-reset-student="${GBUI.esc(s.id)}" data-name="${GBUI.esc(s.name)}">🔐 Verify &amp; reset password</button>
+        <button class="btn light" type="button" data-toggle-activation-student="${GBUI.esc(s.id)}" data-activated="${s.activated?"1":"0"}" data-name="${GBUI.esc(s.name)}">${s.activated?"Deactivate":"Activate"}</button>
+        <button class="btn light" type="button" data-suspend-student="${GBUI.esc(s.id)}" data-status="${s.status}">${s.status==="suspended"?"Reactivate login":"Suspend login"}</button>
+        <button class="btn danger" type="button" data-delete-student="${GBUI.esc(s.id)}">Delete</button></span></div>`).join(""):'<p class="muted">No students registered yet.</p>';
+}
+
+/* Subject assignment is administrator-controlled (students can no longer
+   change this themselves from My Account). */
+async function editStudentSubjects(studentId, studentName, currentCsv){
+  const current=currentCsv?currentCsv.split(",").filter(Boolean):["Use of English"];
+  let catalog=["Use of English","Mathematics","Physics","Chemistry","Biology"];
+  try{const rows=await GB.api("/api/admin/subjects");if(Array.isArray(rows)&&rows.length)catalog=rows.map(r=>r.name||r);}catch{}
+  const ordered=["Use of English",...catalog.filter(s=>s!=="Use of English")];
+  return new Promise(resolve=>{
+    const modal=document.createElement("div");modal.className="modal";
+    modal.innerHTML=`<div class="modal-box" role="dialog" aria-modal="true"><div class="section-head"><div><h2>Assign subjects</h2><small class="muted">${GBUI.esc(studentName||"Student")}</small></div><button class="btn light" type="button" data-cancel>✕</button></div><div id="subjAssignGrid" class="subject-select-grid">${ordered.map(s=>`<label class="subject-choice"><input type="checkbox" value="${GBUI.esc(s)}" ${current.includes(s)?"checked":""} ${s==="Use of English"?"checked disabled":""}> <span>${GBUI.esc(s)}${s==="Use of English"?" <small>Compulsory</small>":""}</span></label>`).join("")}</div><p class="error" id="subjErr"></p><div class="factions" style="justify-content:flex-end"><button class="btn light" type="button" data-cancel>Cancel</button><button class="btn primary" type="button" data-save>Save subjects</button></div></div>`;
+    document.body.appendChild(modal);document.body.classList.add("noscroll");
+    const finish=v=>{modal.remove();document.body.classList.remove("noscroll");resolve(v)};
+    modal.addEventListener("click",async e=>{
+      if(e.target===modal||e.target.closest("[data-cancel]"))return finish(null);
+      if(!e.target.closest("[data-save]"))return;
+      const err=modal.querySelector("#subjErr");
+      const selected=[...modal.querySelectorAll("#subjAssignGrid input:checked")].map(x=>x.value);
+      try{
+        await GB.api("/api/admin/students/"+encodeURIComponent(studentId),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({selectedSubjects:selected})});
+        say("Subjects updated.");students();finish(true);
+      }catch(err2){err.textContent=err2.message||"Could not update subjects.";}
+    });
+  });
+}
+
+/* A small modal so the admin can type a new password for a student who has
+   forgotten theirs — item 1 of the requested changes. */
+async function resetStudentWithVerification(studentId, studentName){
+  let info;
+  try{info=await GB.api('/api/admin/students/'+encodeURIComponent(studentId)+'/security-questions');}catch(err){say(err.message,'error');return;}
+  return new Promise(resolve=>{
+    const modal=document.createElement('div');modal.className='modal';
+    const configured=Boolean(info?.configured);
+    const labels=Array.isArray(info?.questions)?info.questions:[];
+    const questionOptions=[['first_school','What was the name of your first school?'],['birth_city','What city or town were you born in?'],['favourite_subject','What is your favourite school subject?'],['childhood_nickname','What nickname did you use as a child?'],['first_teacher','What was the name of your first teacher?'],['special_word','What special word or phrase would you remember for verification?']];
+    const opts=questionOptions.map(([v,l])=>`<option value="${GBUI.esc(v)}">${GBUI.esc(l)}</option>`).join('');
+    modal.innerHTML=`<div class="modal-box" role="dialog" aria-modal="true"><div class="section-head"><div><h2>Verify &amp; reset password</h2><small class="muted">${GBUI.esc(studentName||'Student')}</small></div><button class="btn light" type="button" data-cancel>✕</button></div>${configured?`<div class="notice"><b>Ask the student:</b><div class="security-question-list"><p>1. ${GBUI.esc(labels[0]||'Security question 1')}</p><p>2. ${GBUI.esc(labels[1]||'Security question 2')}</p></div></div><div class="field"><label>Student's answer to question 1</label><input id="vrA1" type="password" autocomplete="off" maxlength=160></div><div class="field"><label>Student's answer to question 2</label><input id="vrA2" type="password" autocomplete="off" maxlength=160></div>`:`<div class="notice warn"><b>No recovery questions are configured for this student.</b><p>Ask the student for two answers and save them now. These questions will be used for future password recovery.</p></div><div class="field"><label>Security question 1</label><select id="vrQ1">${opts}</select></div><div class="field"><label>Answer 1</label><input id="vrQA1" maxlength=160></div><div class="field"><label>Security question 2</label><select id="vrQ2">${opts}</select></div><div class="field"><label>Answer 2</label><input id="vrQA2" maxlength=160></div>`}<div class="field"><label>New password</label><input id="vrNew" type="password" autocomplete="new-password" maxlength=200 placeholder="At least 8 characters"></div><div class="field"><label>Repeat new password</label><input id="vrNew2" type="password" autocomplete="new-password" maxlength=200></div><p class="error" id="vrErr"></p><div class="factions" style="justify-content:flex-end"><button class="btn light" type="button" data-cancel>Cancel</button><button class="btn primary" type="button" data-save>${configured?'Verify & reset password':'Save verification & reset password'}</button></div></div>`;
+    document.body.appendChild(modal);document.body.classList.add('noscroll');
+    const finish=v=>{modal.remove();document.body.classList.remove('noscroll');resolve(v)};
+    modal.addEventListener('click',async e=>{
+      if(e.target===modal||e.target.closest('[data-cancel]'))return finish(null);
+      if(!e.target.closest('[data-save]'))return;
+      const err=modal.querySelector('#vrErr'),pw=modal.querySelector('#vrNew').value,pw2=modal.querySelector('#vrNew2').value;
+      if(pw.length<8){err.textContent='The new password must be at least 8 characters.';return}if(pw!==pw2){err.textContent='The passwords do not match.';return}
+      try{
+        let answers=[];
+        if(configured){answers=[modal.querySelector('#vrA1').value,modal.querySelector('#vrA2').value];if(answers.some(x=>!x.trim())){err.textContent='Both student answers are required.';return}}
+        else{const q1=modal.querySelector('#vrQ1').value,q2=modal.querySelector('#vrQ2').value,a1=modal.querySelector('#vrQA1').value,a2=modal.querySelector('#vrQA2').value;if(q1===q2){err.textContent='Choose two different security questions.';return}if(!a1.trim()||!a2.trim()){err.textContent='Both security answers are required.';return}await GB.api('/api/admin/students/'+encodeURIComponent(studentId)+'/security-questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({securityQuestions:[{key:q1,answer:a1},{key:q2,answer:a2}]})});answers=[a1,a2];}
+        const r=await GB.api('/api/admin/students/'+encodeURIComponent(studentId)+'/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers,password:pw})});
+        say(r.message||'Password reset successfully.');finish(true);
+      }catch(err2){err.textContent=err2.message||'Password reset failed.';}
+    });
+    setTimeout(()=>modal.querySelector(configured?'#vrA1':'#vrQ1')?.focus(),0);
+  });
+}
+
+document.getElementById("activationForm")?.addEventListener("submit",async e=>{
+  e.preventDefault(); const box=$("activationResult"); const btn=e.submitter; if(btn)btn.disabled=true; box.innerHTML="<p class=\"muted\">Activating account…</p>";
+  try{ const r=await GB.api("/api/admin/activate-product",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productKey:$("activationProductKey").value.trim()})});
+    box.innerHTML=`<div class="notice success" style="margin-top:15px"><b>Account activated successfully</b><div style="display:grid;gap:7px;margin-top:10px"><span>Student: <b>${GBUI.esc(r.studentName)}</b> (@${GBUI.esc(r.username)})</span><span>Device ID: <code>${GBUI.esc(r.deviceId)}</code></span><span>Product Key: <code>${GBUI.esc(r.productKey)}</code></span><span>Activated: ${GBUI.esc(new Date(r.activatedAt).toLocaleString())}</span></div></div>`;
+    $("activationProductKey").value=""; if(typeof students==="function")students();
+  }catch(err){box.innerHTML=`<p class="error">${GBUI.esc(err.message)}</p>`}finally{if(btn)btn.disabled=false}
+});
+
+document.getElementById("deactivationForm")?.addEventListener("submit",async e=>{
+  e.preventDefault(); const box=$("deactivationResult"), btn=e.submitter; if(btn)btn.disabled=true; box.innerHTML="<p class='muted'>Deactivating account…</p>";
+  try{ const r=await GB.api("/api/admin/deactivate-product",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productKey:$("deactivationProductKey").value.trim()})}); box.innerHTML=`<div class="notice success"><b>Account deactivated</b><p>${GBUI.esc(r.studentName||"")} can no longer use activated-only resources.</p></div>`; $("deactivationProductKey").value=""; students(); overview(); }catch(err){box.innerHTML=`<p class='error'>${GBUI.esc(err.message)}</p>`}finally{if(btn)btn.disabled=false}
+});
+
+document.addEventListener("click",async e=>{
+  const toggle=e.target.closest("[data-toggle-activation-student]");
+  if(toggle){ e.stopPropagation(); const id=toggle.dataset.toggleActivationStudent, active=toggle.dataset.activated==="1"; const ok=await GBUI.confirmAction(active?"Deactivate this account?":"Activate this account?",active?"The student will lose activated-only access and receive a notification.":"The student will regain activated-only access.",active?"Yes, deactivate":"Yes, activate"); if(!ok)return; try{ const list=await GB.api("/api/admin/students"); const st=list.find(x=>x.id===id); if(!st)throw Error("Student not found."); if(active){ if(!st.productKey)throw Error("This student has no Product Key."); await GB.api("/api/admin/deactivate-product",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productKey:st.productKey})}); } else { if(!st.productKey)throw Error("This student has no Product Key."); await GB.api("/api/admin/activate-product",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productKey:st.productKey})}); } students(); overview(); say(active?"Student account deactivated.":"Student account activated."); }catch(err){say(err.message,"error")} return; }
+  const reset=e.target.closest("[data-reset-student]");
+  if(reset){ e.stopPropagation(); await resetStudentWithVerification(reset.dataset.resetStudent,reset.dataset.name||"Student"); return; }
+  const subj=e.target.closest("[data-edit-subjects]");
+  if(subj){ e.stopPropagation(); await editStudentSubjects(subj.dataset.editSubjects,subj.dataset.name||"Student",subj.dataset.subjects||""); return; }
+  const suspend=e.target.closest("[data-suspend-student]");
+  if(suspend){ e.stopPropagation(); const id=suspend.dataset.suspendStudent, next=suspend.dataset.status==="suspended"?"active":"suspended"; const ok=await GBUI.confirmAction(next==="suspended"?"Suspend this student?":"Reactivate this student?",next==="suspended"?"The student will not be able to log in until the account is reactivated.":"The student will regain access to the portal.",next==="suspended"?"Yes, suspend":"Yes, reactivate"); if(!ok)return; try{await GB.api("/api/admin/students/"+encodeURIComponent(id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:next})});students();say(next==="suspended"?"Student suspended.":"Student reactivated.");}catch(err){say(err.message,"error")} return; }
+  const delStudent=e.target.closest("[data-delete-student]");
+  if(delStudent){ e.stopPropagation(); const id=delStudent.dataset.deleteStudent; const ok=await GBUI.confirmAction("Delete this student account?","This permanently removes the student profile and every CBT result attached to it. This cannot be undone.","Yes, delete account",{requirePhrase:"DELETE STUDENT"}); if(!ok)return; try{await GB.del("/api/admin/students/"+encodeURIComponent(id));students();overview();say("Student account deleted.");}catch(err){say(err.message,"error")} return; }
+  const row=e.target.closest("[data-student]");
+  if(!row) return;
+  try{
+    const p=await GB.api("/api/admin/students/"+encodeURIComponent(row.dataset.student)+"/progress");
+    $("pTitle").textContent="Progress — "+p.student.name;
+    $("progressBody").innerHTML=`
+      <div class="statgrid">
+        <div class="statcard plain"><div class="ic">📝</div><strong>${p.tests}</strong><small>Tests taken</small></div>
+        <div class="statcard plain"><div class="ic">🎯</div><strong class="g-${GBUI.GRADE(p.average).band}">${p.average}% ${GBUI.GRADE(p.average).emoji}</strong><small>Average — ${GBUI.esc(GBUI.GRADE(p.average).word)}</small></div>
+        <div class="statcard plain"><div class="ic">🏅</div><strong>${p.best}%</strong><small>Best score</small></div>
+        <div class="statcard plain"><div class="ic">📅</div><strong>${p.joined?new Date(p.joined).toLocaleDateString():"—"}</strong><small>Joined</small></div>
+      </div>
+      <div class="subjectgrid">${p.bySubject.map(s=>`<div class="subject-card static"><b>${GBUI.SUBJECT_ICONS[s.subject]||"📗"} ${GBUI.esc(s.subject)}</b>
+        <div class="progress"><i style="width:${s.average}%"></i></div>
+        <small>${s.average}% average • best ${s.best}% • ${s.tests} test${s.tests===1?"":"s"}</small></div>`).join("")}</div>
+      <h3>Every submission</h3>
+      ${p.results.length?p.results.map(r=>{const g=GBUI.GRADE(r.score);return `<div class="adminrow"><span class="nm"><b>${GBUI.esc(r.testTitle)}</b><small>${GBUI.esc(r.subject||"")} • ${new Date(r.date||Date.now()).toLocaleString()}</small></span><span class="sc g-${g.band}">${r.score}% <small>${g.emoji}</small></span><span class="tc">${r.correct}✔ ${r.wrong}✘ ${r.unanswered}–</span></div>`}).join(""):'<p class="muted">This student has not submitted any CBT yet.</p>'}`;
+    $("progressCard").hidden=false;
+    $("progressCard").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(err){say(err.message,"error")}
+});
+
+/* ----------------------------- materials ------------------------------ */
+async function notes(){
+  const list=await GB.api("/api/admin/notes");
+  const bySubject=SUBJECTS.map(s=>{
+    const items=list.filter(n=>n.subject===s);
+    if(!items.length) return "";
+    return `<h3>${GBUI.SUBJECT_ICONS[s]} ${s} <small class="muted">(${items.length})</small></h3>`+
+      GBUI.collapsible("adm-"+s.replace(/\W/g,""), items.map(n=>`<div class="adminrow">
+        <span class="nm"><b>${GBUI.esc(n.title)}</b><small>${GBUI.esc(n.topic||"")} ${(n.attachments||[]).length} file(s)</small></span>
+        <span class="tc">${n.published?"✅ Published":"🕓 Draft"}</span>
+        <span class="factions">
+          <button class="btn light" type="button" data-edit-note="${GBUI.esc(n.id)}">✎ Edit</button>
+          <button class="btn light" type="button" data-toggle-note="${GBUI.esc(n.id)}" data-pub="${n.published?0:1}">${n.published?"Unpublish":"Publish"}</button>
+          <button class="btn danger" type="button" data-del-note="${GBUI.esc(n.id)}">Delete</button>
+        </span></div>`));
+  }).join("");
+  $("notesList").innerHTML=bySubject||'<p class="muted">No materials yet.</p>';
+}
+
+function editNoteModal(n){
+  const modal=document.createElement("div");modal.className="modal";
+  modal.innerHTML=`<div class="modal-box" role="dialog" aria-modal="true"><div class="section-head"><h2>Edit learning material</h2><button class="btn light" type="button" data-cancel>✕</button></div>
+  <div class="formgrid"><div class="field"><label>Title</label><input id="enTitle" maxlength="200" value="${GBUI.esc(n.title||"")}"></div>
+  <div class="field"><label>Subject</label><select id="enSubject">${SUBJECTS.map(s=>`<option value="${s}" ${s===n.subject?"selected":""}>${s}</option>`).join("")}</select></div>
+  <div class="field full"><label>Topic</label><input id="enTopic" maxlength="200" value="${GBUI.esc(n.topic||"")}"></div>
+  <div class="field full"><label>Note content</label><textarea id="enBody" rows="14">${GBUI.esc(n.body||"")}</textarea></div>
+  <div class="field"><label>Access</label><select id="enAccess"><option value="all" ${n.access!=="activated"?"selected":""}>Everyone — all registered students</option><option value="activated" ${n.access==="activated"?"selected":""}>Activated Students Only 🔒</option></select></div><label class="check"><input id="enPub" type="checkbox" ${n.published?"checked":""}> Published</label></div>
+  <p class="muted">Existing attachments are preserved. This editor updates the note without requiring a re-upload.</p><p id="enErr" class="error"></p>
+  <div class="factions" style="justify-content:flex-end"><button class="btn light" type="button" data-cancel>Cancel</button><button class="btn primary" type="button" data-save>Save changes</button></div></div>`;
+  document.body.appendChild(modal);document.body.classList.add("noscroll");
+  const close=()=>{modal.remove();document.body.classList.remove("noscroll")};
+  modal.addEventListener("click",async e=>{
+    if(e.target===modal||e.target.closest("[data-cancel]"))return close();
+    if(!e.target.closest("[data-save]"))return;
+    const err=modal.querySelector("#enErr"),title=modal.querySelector("#enTitle").value.trim(),body=modal.querySelector("#enBody").value.trim();
+    if(!title||!body){err.textContent="Title and note content are required.";return}
+    try{await GB.api("/api/admin/notes/"+encodeURIComponent(n.id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,subject:modal.querySelector("#enSubject").value,topic:modal.querySelector("#enTopic").value,body,published:modal.querySelector("#enPub").checked,access:modal.querySelector("#enAccess").value})});close();notes();overview();say("Learning material updated successfully.");}catch(x){err.textContent=x.message}
+  });
+}
+async function uploadAll(input,progressEl,bar){
+  const out=[];
+  const files=Array.from(input.files||[]);
+  if(!files.length){ if(progressEl)progressEl.textContent="No attachments selected."; if(bar){bar.style.width="0%";} return out; }
+  for(let i=0;i<files.length;i++){
+    const f=files[i];
+    const mb=(f.size/1048576).toFixed(1);
+    if(progressEl)progressEl.textContent=`Uploading ${f.name} (${mb} MB) — 0% (${i+1} of ${files.length})`;
+    try{
+      const up=await GB.upload(f,pct=>{
+        const overall=Math.round(((i+pct/100)/files.length)*100);
+        if(progressEl)progressEl.textContent=`Uploading ${f.name} (${mb} MB) — ${pct}% (${i+1} of ${files.length})`;
+        if(bar)bar.style.width=overall+"%";
+      });
+      out.push({key:up.fileKey,fileName:up.fileName,contentType:up.contentType,size:up.size});
+    }catch(err){
+      if(progressEl)progressEl.textContent="";
+      if(bar)bar.style.width="0%";
+      throw new Error(`${f.name} could not be uploaded: ${err.message}`);
+    }
+  }
+  if(progressEl)progressEl.textContent=`${out.length} file(s) uploaded successfully — 100%.`;
+  if(bar)bar.style.width="100%";
+  return out;
+}
+
+/* -------------------------------- CBTs -------------------------------- */
+/* ----------------------- student form builder ----------------------- */
+function addStudentField(field={}){const host=$("studentFields");if(!host)return;const key=GBUI.esc(field.key||`field_${host.children.length+1}`),label=GBUI.esc(field.label||"New field");host.insertAdjacentHTML("beforeend",`<div class="student-field-row card soft" data-student-field><div class="formgrid"><div class="field"><label>Label</label><input class="sf-label" value="${label}" maxlength="160"></div><div class="field"><label>Type</label><select class="sf-type"><option value="text">Text</option><option value="email">Email</option><option value="tel">Phone</option><option value="number">Number</option><option value="textarea">Long text</option><option value="select">Dropdown</option></select></div><div class="field"><label>Key</label><input class="sf-key" value="${key}" maxlength="80"></div><div class="field sf-options-wrap"><label>Dropdown options</label><input class="sf-options" value="${GBUI.esc((field.options||[]).join(", "))}" placeholder="Option 1, Option 2"></div></div><div class="field-actions"><label class="check"><input class="sf-required" type="checkbox" ${field.required!==false?'checked':''}> Required</label><label class="check"><input class="sf-leaderboard" type="checkbox" ${field.leaderboard?'checked':''}> Show on leaderboard</label><button class="btn light" type="button" data-remove-student-field>Remove</button></div></div>`);const row=host.lastElementChild;row.querySelector('.sf-type').value=field.type||'text';const update=()=>row.querySelector('.sf-options-wrap').hidden=row.querySelector('.sf-type').value!=='select';row.querySelector('.sf-type').addEventListener('change',update);update()}
+function collectStudentFields(){return [...document.querySelectorAll('#studentFields [data-student-field]')].map((r,i)=>({key:(r.querySelector('.sf-key').value||`field_${i+1}`).trim().toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,''),label:r.querySelector('.sf-label').value.trim()||`Field ${i+1}`,type:r.querySelector('.sf-type').value,required:r.querySelector('.sf-required').checked,leaderboard:r.querySelector('.sf-leaderboard').checked,options:r.querySelector('.sf-options').value.split(',').map(v=>v.trim()).filter(Boolean)})).filter(x=>x.label)}
+function addQuestion(){
+  const container=$("qs");
+  const index=container.querySelectorAll(".qblock").length+1;
+  container.insertAdjacentHTML("beforeend",`<div class="qblock" data-index="${index}">
+    <div class="qhead"><b>Question ${index}</b><button class="btn light" type="button" data-remove-q>Remove</button></div>
+    <div class="formgrid"><div class="field"><label>Section</label><select class="qSection"></select></div><div class="field"><label>Question type</label><select class="qtType"><option value="mcq">Multiple choice</option><option value="passage">Passage question</option></select></div></div>
+    <div class="q-type">
+      <label class="check"><input class="qRoman" type="checkbox"> Roman-numeral format (I–IV)</label>
+      <span class="muted">Roman-numeral format is optional for any subject; when enabled, the question must visibly contain statements I., II., III. and IV.</span></div>
+    <div class="passage-wrap"><div class="notice"><b>English passage-setting guide:</b> Create one unique Passage Group ID for the passage, paste the full passage once, then use that same ID and passage for every question based on it. Do not create a new passage ID for each question. Keep each question's options and correct answer tied to that passage.</div><label>Passage group ID <small class="muted">(same ID for every question attached to this passage)</small></label><input class="qpassageId" placeholder="e.g. ENG-P01"><label>Shared passage shown above the related questions</label><div class="qpassage-editor"></div><small class="muted">Preview rule: students will see the shared passage before the question. Use the same passage text for all questions in this group.</small></div>
+    <label>Question</label><div class="qtEditor"></div>
+    <label>Question image (optional)</label><input class="qimage" type="file" accept="image/*">
+    <div class="formgrid">${[0,1,2,3].map(n=>`<div class="field"><label>Option ${"ABCD"[n]}</label><input class="qo" placeholder="Option ${"ABCD"[n]}" required maxlength="1000"></div>`).join("")}</div>
+    <div class="formgrid"><div class="field"><label>Marks for this question</label><input class="qMarks" type="number" min="0.1" step="0.1" value="1" required></div><div class="field"><label>Correct option <select class="qa">${[0,1,2,3].map(n=>`<option value="${n}">${"ABCD"[n]}</option>`).join("")}</select></label></div></div>
+    <label>Explanation (optional)</label><textarea class="qe" rows="3" placeholder="Reason shown after submission" maxlength="3000"></textarea>
+  </div>`);
+  const block=container.lastElementChild;
+  block._qEditor=editor(block.querySelector(".qtEditor"),"Write the question. Use bold, italic, underline, superscript and subscript.");
+  block._pEditor=editor(block.querySelector(".qpassage-editor"),"Write the shared passage here…");
+  const type=block.querySelector(".qtType"), wrap=block.querySelector(".passage-wrap");
+  const upd=()=>wrap.hidden=type.value!=="passage";
+  type.addEventListener("change",upd); upd(); syncQuestionSections();
+  // Roman-numeral questions must sit in a complete, separate section rather
+  // than being mixed indiscriminately with ordinary questions. Checking the
+  // box finds (or creates) the dedicated section and moves this question
+  // into it automatically, so the admin never has to remember to do this by hand.
+  block.querySelector(".qRoman").addEventListener("change",e=>{
+    if(!e.target.checked)return;
+    let romanSection=assessmentSectionRows().find(s=>s.title.trim().toLowerCase()==="roman numeral questions");
+    if(!romanSection){addAssessmentSection("Roman Numeral Questions","Each statement below is numbered with a Roman numeral (I, II, III…). Read every statement carefully before choosing an answer.");romanSection=assessmentSectionRows().find(s=>s.title.trim().toLowerCase()==="roman numeral questions");}
+    if(romanSection)block.querySelector(".qSection").value=romanSection.id;
+  });
+}
+function assessmentSectionRows(){
+  return [...document.querySelectorAll("#assessmentSections .assessment-section")].map((row,i)=>({
+    id:row.dataset.id||String(i+1), title:row.querySelector(".section-title")?.value.trim()||`Section ${i+1}`, instructions:row.querySelector(".section-instructions")?.value||""
+  }));
+}
+function syncQuestionSections(){
+  const rows=assessmentSectionRows();
+  const opts=rows.length?rows.map((x,i)=>`<option value="${GBUI.esc(x.id)}">${GBUI.esc(x.title||`Section ${i+1}`)}</option>`).join(""):'<option value="default">General</option>';
+  document.querySelectorAll("#qs .qSection").forEach(sel=>{const old=sel.value;sel.innerHTML=opts; if([...sel.options].some(o=>o.value===old))sel.value=old;});
+}
+function addAssessmentSection(title="", instructions=""){
+  const host=$("assessmentSections"); if(!host)return;
+  const n=host.querySelectorAll(".assessment-section").length+1, id=crypto.randomUUID();
+  host.insertAdjacentHTML("beforeend",`<div class="assessment-section" data-id="${id}"><div class="section-head"><b>Section ${n}</b><button class="btn light" type="button" data-remove-assessment-section>Remove</button></div><div class="formgrid"><div class="field"><label>Section title</label><input class="section-title" maxlength="160" value="${GBUI.esc(title||`Section ${n}`)}"></div><div class="field full"><label>Section instructions (optional)</label><textarea class="section-instructions" rows="2" maxlength="4000">${GBUI.esc(instructions||"")}</textarea></div></div></div>`);
+  syncQuestionSections();
+}
+function collectQuestion(block){
+  return {sectionId:block.querySelector(".qSection")?.value||"default",type:block.querySelector(".qtType").value,roman:!!block.querySelector(".qRoman")?.checked,passageId:block.querySelector(".qpassageId").value,passage:block._pEditor?.get()||"",q:block._qEditor?.get()||"",options:[...block.querySelectorAll(".qo")].map(x=>x.value),answer:Number(block.querySelector(".qa").value),marks:Number(block.querySelector(".qMarks")?.value)||1,explanation:block.querySelector(".qe").value,imageFile:block.querySelector(".qimage").files[0]||null,image:block._importedImage||null};
+}
+function fillQuestionBlock(block, q){
+  if(q.sectionId && block.querySelector(".qSection")) block.querySelector(".qSection").value=q.sectionId;
+  if(q.type) block.querySelector(".qtType").value=q.type;
+  block.querySelector(".qRoman").checked=!!q.roman;
+  block.querySelector(".qpassageId").value=q.passageId||"";
+  block._pEditor?.set(q.passage||"");
+  block._qEditor?.set(q.q||"");
+  const opts=q.options||[];
+  if(opts.length>4 && !block.querySelector(".qo-extra")) {
+    const grid=block.querySelector(".formgrid");
+    grid.insertAdjacentHTML("beforeend",`<div class="field qo-extra-wrap"><label>Option E <small class="muted">(imported five-option question)</small></label><input class="qo qo-extra" placeholder="Option E" maxlength="1000"></div>`);
+    const sel=block.querySelector(".qa");
+    if(!sel.querySelector('option[value="4"]')) sel.insertAdjacentHTML("beforeend",`<option value="4">E</option>`);
+  }
+  block.querySelectorAll(".qo").forEach((el,i)=>el.value=opts[i]||"");
+  block.querySelector(".qa").value=String(Number.isInteger(Number(q.answer))?Number(q.answer):0);
+  block.querySelector(".qMarks").value=String(Number(q.marks)>0?Number(q.marks):1);
+  block.querySelector(".qe").value=q.explanation||"";
+  block._importedImage=q.image||null;
+  const type=block.querySelector(".qtType"), wrap=block.querySelector(".passage-wrap");
+  if(wrap) wrap.hidden=type.value!=="passage";
+}
+async function importTestQuestions(){
+  const f=$("tImportFile").files[0]; if(!f){say("Choose a PDF, Word or text document first.","error");return}
+  const status=$("tImportStatus"), report=$("tImportReport");
+  status.textContent="Uploading document…"; report.innerHTML="";
+  try{
+    const up=await GB.upload(f,p=>status.textContent=`Uploading document — ${p}%`);
+    status.textContent="Extracting questions…";
+    const subject=$("tsubject").value;
+    const r=await GB.api("/api/admin/tests/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject,fileKey:up.fileKey,fileName:up.fileName,contentType:up.contentType})});
+    const qs=r.questions||[];
+    if(!qs.length) throw new Error("No questions were extracted from the document.");
+    const host=$("qs");
+    for(const q of qs){ addQuestion(); fillQuestionBlock(host.lastElementChild,q); }
+    const x=r.extraction||{};
+    report.innerHTML=`<div class="extract-card ${x.quality==="good"?"good":x.quality==="fair"?"warn":"bad"}"><b>${GBUI.esc(x.verdict||"Questions extracted")}</b><p>${GBUI.esc(x.summary||`${qs.length} question(s) added to the CBT.`)}</p></div>`;
+    status.textContent=`${qs.length} question${qs.length===1?"":"s"} added to the CBT. Review and edit them before publishing.`;
+  }catch(err){ status.textContent=""; report.innerHTML=`<div class="extract-card bad"><b>Extraction failed ❌</b><p>${GBUI.esc(err.message)}</p></div>`; say(err.message,"error"); }
+}
+
+async function prepareQuestions(blocks){
+  const out=[];
+  for(const b of blocks){ const q=collectQuestion(b); if(q.imageFile){const up=await GB.upload(q.imageFile,()=>{});q.image={key:up.fileKey,fileName:up.fileName,contentType:up.contentType,size:up.size};delete q.imageFile;} else {delete q.imageFile;} out.push(q); }
+  return out;
+}
+
+/* --------------------------- question bank ---------------------------- */
+let bankCache=[];
+function bankRow(q){
+  const chip=q.needsReview?'<span class="pill warn">⚠️ Needs answer review</span>':'<span class="pill good">✅ Ready</span>';
+  return `<div class="qb-row" data-qid="${GBUI.esc(q.id)}">
+    <div class="qb-main">
+      <div class="qb-q">${GBUI.renderBody(q.q,"html")}</div>
+      <div class="qb-opts">${(q.options||[]).map((o,i)=>`<span class="qb-opt ${i===q.answer?"is-answer":""}">${"ABCDE"[i]}. ${GBUI.esc(o)}${i===q.answer?" ✓":""}</span>`).join("")}</div>
+      ${q.explanation?`<div class="qb-exp">💡 ${GBUI.esc(q.explanation)}</div>`:""}
+      <small class="muted">${GBUI.esc(q.subject||"")} • ${q.passageId?"Passage question":"Multiple choice"}${q.roman?" • <b>Roman-numeral I–IV</b>":""}${q.source?" • from "+GBUI.esc(q.source):""}</small>
+    </div>
+    <div class="qb-side">${chip}
+      <span class="factions">
+        <button class="btn light" type="button" data-preview-bank="${GBUI.esc(q.id)}">👁 Student Preview</button>
+        <button class="btn light" type="button" data-edit-bank="${GBUI.esc(q.id)}">✎ Edit</button>
+        <button class="btn danger" type="button" data-del-bank="${GBUI.esc(q.id)}">Delete</button>
+      </span></div></div>`;
+}
+
+function showBankStudentPreview(q){
+  const modal=document.createElement("div");
+  modal.className="modal";
+  modal.innerHTML=`<div class="modal-box wide" role="dialog" aria-modal="true" aria-label="Student preview">
+    <div class="section-head">
+      <h2>Student Preview</h2>
+      <button class="btn light" type="button" data-preview-close>✕</button>
+    </div>
+    <div class="student-preview">
+      ${q.passage?`<div class="preview-passage"><div class="eyebrow">PASSAGE</div>${GBUI.renderBody(q.passage,"html")}</div>`:""}
+      <div class="preview-question">
+        <div class="preview-question-text">${GBUI.renderBody(q.q||"","html")}</div>
+        <div class="preview-options">
+          ${(Array.isArray(q.options)?q.options:[]).slice(0,4).map((o,i)=>`<div class="preview-option"><b>${"ABCD"[i]}.</b> ${GBUI.esc(o)}</div>`).join("")}
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  document.body.classList.add("noscroll");
+  const close=()=>{
+    modal.remove();
+    document.body.classList.remove("noscroll");
+  };
+  modal.addEventListener("click",e=>{
+    if(e.target===modal || e.target.closest("[data-preview-close]")) close();
+  });
+  setTimeout(()=>modal.querySelector("[data-preview-close]")?.focus(),0);
+}
+
+const topicCache=new Map();
+const topicPending=new Map();
+const topicRequestSerial={btopic:0,bmTopic:0};
+function topicSubjectKey(x){return String(x||"").trim().replace(/\s+/g," ").toLowerCase();}
+function invalidateTopicCache(subject){if(subject)topicCache.delete(topicSubjectKey(subject));else topicCache.clear();}
+function topicBelongsToSubject(t,subject){const a=topicSubjectKey(t?.subject),b=topicSubjectKey(subject);return !a||a===b;}
+function normaliseTopicRows(rows,subject){const seen=new Set(),out=[];for(const t of Array.isArray(rows)?rows:[]){const id=String(t?.id||"").trim(),name=String(t?.name||"").trim();if(!id||!name||/uncategorized/i.test(name)||seen.has(id)||!topicBelongsToSubject(t,subject))continue;seen.add(id);out.push({...t,id,name,subject:String(t.subject||subject).trim()||subject,count:Number(t.count)||0});}return out;}
+async function fetchTopicsForSubject(subject,{force=false}={}){const s=String(subject||"").trim()||SUBJECTS[0],k=topicSubjectKey(s);if(!force&&topicCache.has(k))return topicCache.get(k);if(topicPending.has(k))return topicPending.get(k);const promise=(async()=>{try{let rows=await GB.api("/api/admin/topics?subject="+encodeURIComponent(s));rows=normaliseTopicRows(rows,s);if(!rows.length){const bank=await GB.api("/api/admin/question-bank?subject="+encodeURIComponent(s));const map=new Map();for(const q of Array.isArray(bank)?bank:[]){const id=String(q?.topicId||"").trim(),name=String(q?.topic||"").trim();if(id&&name&&!/uncategorized/i.test(name)&&!map.has(id))map.set(id,{id,subject:s,name,count:0});if(id&&map.has(id))map.get(id).count++;}rows=[...map.values()];}topicCache.set(k,rows);return rows;}finally{topicPending.delete(k);}})();topicPending.set(k,promise);return promise;}
+async function loadTopicsUI(){const subject=String($("topicSubject")?.value||SUBJECTS[0]).trim();const topics=await fetchTopicsForSubject(subject);const list=$("topicList");list.innerHTML=topics.length?topics.map(t=>`<div class="qb-topic-row"><span><b>${GBUI.esc(t.name)}</b><small>${Number(t.count)||0} question${Number(t.count)===1?"":"s"}</small></span><span class="qb-topic-actions"><button class="btn light" type="button" data-view-topic="${GBUI.esc(t.id)}">View Questions</button>${/uncategorized/i.test(t.name)?"":`<button class="btn light" type="button" data-ren-topic="${GBUI.esc(t.id)}">Rename</button>`}<button class="btn danger" type="button" data-del-topic="${GBUI.esc(t.id)}">Delete</button></span></div>`).join(""):"<p class='muted'>No topics yet.</p>";return topics;}
+async function refreshTopicSelector(selectId,subject,{force=false}={}){const el=$(selectId);if(!el)return [];const serial=++topicRequestSerial[selectId];const s=String(subject||"").trim()||SUBJECTS[0];const previous=el.value;const hadTopics=el.options.length>1;if(!hadTopics){el.disabled=true;el.innerHTML='<option value="">Loading topics…</option>';}else el.disabled=false;try{const topics=await fetchTopicsForSubject(s,{force});if(serial!==topicRequestSerial[selectId])return topics;el.innerHTML=`<option value="">${topics.length?'Select a topic':'No topics available for this subject'}</option>`+topics.map(t=>`<option value="${GBUI.esc(t.id)}">${GBUI.esc(t.name)} (${Number(t.count)||0})</option>`).join('');el.disabled=!topics.length;if(previous&&[...el.options].some(o=>o.value===previous))el.value=previous;return topics;}catch(e){if(serial!==topicRequestSerial[selectId])return [];if(!hadTopics){el.innerHTML='<option value="">Unable to load topics</option>';el.disabled=true;}else el.disabled=false;say(`Topics for ${s} could not be loaded. ${e.message}`,'error');return [];}}
+async function refreshTopicSelectors({force=false}={}){return Promise.all([refreshTopicSelector('btopic',$("bsubject")?.value,{force}),refreshTopicSelector('bmTopic',$("bmSubject")?.value,{force})]);}
+
+async function loadReports(){
+  const qs=new URLSearchParams();
+  if($("reportStatus").value)qs.set("status",$("reportStatus").value);
+  if($("reportSubject").value)qs.set("subject",$("reportSubject").value);
+  if($("reportSearch").value.trim())qs.set("q",$("reportSearch").value.trim());
+  const rows=await GB.api("/api/admin/question-reports?"+qs.toString());
+  $("reportsList").innerHTML=rows.length?GBUI.collapsible("reportMore",rows.map(r=>`<div class="card"><div class="section-head"><div><b>${GBUI.esc(r.reason)}</b><small>${GBUI.esc(r.status)} • ${new Date(r.createdAt).toLocaleString()} • ${r.reportCount||1} report${(r.reportCount||1)===1?"":"s"} for this question</small></div><span>${GBUI.esc(r.studentName)}${r.studentUsername?` (@${GBUI.esc(r.studentUsername)})`:""}</span></div><p><b>Question:</b> ${GBUI.renderBody(r.questionText,"html")}</p><p><b>Topic:</b> ${GBUI.esc(r.topic||"Uncategorized / Topic Not Assigned")}</p>${r.details?`<p><b>Student details:</b> ${GBUI.esc(r.details)}</p>`:""}<div class="factions"><button class="btn light" type="button" data-edit-reported="${GBUI.esc(r.questionId)}">✎ Open Question</button>${["Pending","Reviewed","Resolved","Dismissed"].map(s=>`<button class="btn light" type="button" data-report-status="${GBUI.esc(r.id)}" data-status="${s}" ${r.status===s?"disabled":""}>${s}</button>`).join("")}</div></div>`),8):"<p class='muted'>No reports match the current filters.</p>";
+}
+
+function cleanCopyText(value){return String(value||"").replace(/<br\s*\/?\>/gi,"\n").replace(/<[^>]*>/g,"").replace(/&nbsp;/gi," ").replace(/[ \t]+/g," ").replace(/\n\s*\n+/g,"\n").trim();}
+
+async function bank(){
+  const subject=$("bankFilter").value||"";
+  const selectedTopic=$("bankTopicFilter")?.value||"";
+  bankCache=await GB.api("/api/admin/question-bank"+(subject?"?subject="+encodeURIComponent(subject):""));
+  if($("bankTopicFilter")){
+    const topics=await GB.api("/api/admin/topics"+(subject?"?subject="+encodeURIComponent(subject):""));
+    const usable=Array.isArray(topics)?topics:[];
+    $("bankTopicFilter").innerHTML=`<option value="">All topics</option>`+usable.map(t=>`<option value="${GBUI.esc(t.id)}">${GBUI.esc(t.name)} (${Number(t.count)||0})</option>`).join("");
+    if(selectedTopic && [...$("bankTopicFilter").options].some(o=>o.value===selectedTopic)) $("bankTopicFilter").value=selectedTopic;
+  }
+  const mode=$("bankReviewFilter").value||"", topicId=$("bankTopicFilter")?.value||"";
+  const list=bankCache.filter(q=>(!topicId||String(q.topicId)===topicId)&&(mode==="review"?q.needsReview:mode==="ready"?!q.needsReview:true));
+  const review=bankCache.filter(q=>q.needsReview).length;
+  const target=subject?"No fixed limit":"All subjects";
+  $("bankCount").innerHTML=`${bankCache.length} question${bankCache.length===1?"":"s"} in ${subject?GBUI.esc(subject):"all subjects"} • target ${target}`+
+    
+    (review?` • <b>${review}</b> still need the correct answer confirmed.`:" • every question has a confirmed answer. ✅");
+  $("bankList").innerHTML=list.length?GBUI.collapsible("bankMore",list.map(bankRow),8):"<p class='muted'>No questions match this filter.</p>";
+}
+
+/* Edit one banked question in place. */
+function editBankModal(q){
+  const modal=document.createElement("div"); modal.className="modal";
+  modal.innerHTML=`<div class="modal-box wide" role="dialog" aria-modal="true">
+    <div class="section-head"><h2>Edit question</h2><button class="btn light" type="button" data-cancel>✕</button></div>
+    <div class="formgrid">
+      <div class="field"><label>Subject</label><select id="ebSubject">${SUBJECTS.map(s=>`<option value="${s}" ${s===q.subject?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div class="field"><label>Topic</label><select id="ebTopic"><option value="">Uncategorized / Topic Not Assigned</option></select></div>
+      <div class="field"><label>Correct option</label><select id="ebAnswer">${[0,1,2,3,4].slice(0,(q.options||[]).length>4?5:4).map(n=>`<option value="${n}" ${n===q.answer?"selected":""}>${"ABCDE"[n]}</option>`).join("")}</select></div>
+      <div class="field full"><label>Question</label><div id="ebQuestion"></div></div>
+      ${[0,1,2,3,4].slice(0,(q.options||[]).length>4?5:4).map(n=>`<div class="field"><label>Option ${"ABCDE"[n]}</label><input id="ebO${n}" maxlength="1000" value="${GBUI.esc((q.options||[])[n]||"")}"></div>`).join("")}
+      <div class="field full"><label>Explanation (optional)</label><textarea id="ebExp" rows="3" maxlength="3000">${GBUI.esc(q.explanation||"")}</textarea></div>
+      <label class="check"><input id="ebRoman" type="checkbox" ${q.roman?"checked":""}> Roman-numeral format (I–IV)</label>
+      <label class="check"><input id="ebReview" type="checkbox" ${q.needsReview?"checked":""}> Still needs answer review</label>
+    </div>
+    <p class="error" id="ebErr"></p>
+    <div class="factions" style="justify-content:flex-end"><button class="btn light" type="button" data-cancel>Cancel</button><button class="btn primary" type="button" data-save>Save changes</button></div></div>`;
+  document.body.appendChild(modal); document.body.classList.add("noscroll");
+  const ed=editor(modal.querySelector("#ebQuestion"),"Write the question…");
+  ed.set(q.q||"");
+  const loadEditTopics=async()=>{
+    const s=modal.querySelector("#ebSubject").value;
+    const rows=await GB.api("/api/admin/topics?subject="+encodeURIComponent(s));
+    modal.querySelector("#ebTopic").innerHTML=`<option value="">Uncategorized / Topic Not Assigned</option>`+rows.map(t=>`<option value="${GBUI.esc(t.id)}">${GBUI.esc(t.name)}</option>`).join("");
+    if(q.topicId) modal.querySelector("#ebTopic").value=q.topicId;
+  };
+  modal.querySelector("#ebSubject").addEventListener("change",loadEditTopics);
+  loadEditTopics();
+  const close=()=>{modal.remove();document.body.classList.remove("noscroll")};
+  modal.addEventListener("click",async e=>{
+    if(e.target===modal||e.target.closest("[data-cancel]")) return close();
+    if(!e.target.closest("[data-save]")) return;
+    const optionCount=(q.options||[]).length>4?5:4; const options=[0,1,2,3,4].slice(0,optionCount).map(n=>modal.querySelector("#ebO"+n).value.trim());
+    const err=modal.querySelector("#ebErr");
+    if(!ed.get().replace(/<[^>]*>/g,"").trim()){err.textContent="The question text cannot be empty.";return}
+    if(options.some(o=>!o)){err.textContent="All option fields are required.";return}
+    try{
+      await GB.api("/api/admin/question-bank/"+encodeURIComponent(q.id),{method:"PATCH",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({subject:modal.querySelector("#ebSubject").value,topicId:modal.querySelector("#ebTopic").value,q:ed.get(),options,
+          answer:Number(modal.querySelector("#ebAnswer").value),explanation:modal.querySelector("#ebExp").value,
+          roman:modal.querySelector("#ebRoman").checked,needsReview:modal.querySelector("#ebReview").checked})});
+      close(); say("Question updated."); bank();
+    }catch(e2){err.textContent=e2.message}
+  });
+}
+
+async function importBankFile(){
+  const f=$("bfile").files[0]; if(!f){say("Choose a PDF, Word or text document first.","error");return}
+  $("bextract").innerHTML="";
+  try{
+    $("bprog").textContent="Uploading document…";
+    const up=await GB.upload(f,p=>$("bprog").textContent="Uploading document — "+p+"%");
+    $("bprog").textContent="Reading the document and pulling out the questions…";
+    const r=await GB.api("/api/admin/question-bank/import",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({subject:$("bsubject").value,topicId:$("btopic").value,fileKey:up.fileKey,fileName:up.fileName,contentType:up.contentType})});
+    $("bprog").textContent="";
+    $("bextract").innerHTML=extractionCard(r.extraction,f.name);
+    bank(); overview();
+  }catch(e){
+    $("bprog").textContent="";
+    let extra="";
+    try{ extra=e.extraction?extractionCard(e.extraction,f.name):""; }catch{}
+    $("bextract").innerHTML=extra||`<div class="extract-card bad"><b>Extraction failed ❌</b><p>${GBUI.esc(e.message)}</p>
+      <small class="muted">Tip: the document should have numbered questions (1., 2., 3.…), options written as A. B. C. D. (source E. is automatically folded into D), and ideally an answer key at the end.</small></div>`;
+    say(e.message,"error");
+  }
+}
+function extractionCard(x,fileName){
+  if(!x) return "";
+  const tone=x.quality==="good"?"good":x.quality==="fair"?"warn":"bad";
+  return `<div class="extract-card ${tone}">
+    <b>${GBUI.esc(x.verdict)}</b>
+    <p>${GBUI.esc(fileName||"Document")}: ${GBUI.esc(x.summary)}</p>
+    <div class="extract-stats">
+      <span>✅ ${x.clean} with a confirmed answer</span>
+      <span>⚠️ ${x.needsReview} need your review</span>
+      <span>➖ ${x.skipped} skipped</span>
+      <span>🔗 ${x.passageGroups||0} linked passage group${(x.passageGroups||0)===1?"":"s"}</span>
+      ${x.comprehensionGroups?`<span>📖 ${x.comprehensionGroups} comprehension group${x.comprehensionGroups===1?"":"s"}</span>`:""}
+      ${x.clozeGroups?`<span>📝 ${x.clozeGroups} cloze group${x.clozeGroups===1?"":"s"}</span>`:""}
+      <span>🖼️ ${x.imagesAttached||0}/${x.imagesFound||0} image${(x.imagesFound||0)===1?"":"s"} attached</span>
+      <span>${x.answerKeyFound?"🔑 Answer key found":"🔑 No answer key found"}</span>
+    </div>
+    ${(x.skippedReasons||[]).length?`<details><summary>Why some blocks were skipped</summary><ul>${x.skippedReasons.map(s=>`<li>Question ${GBUI.esc(s.number)}: ${GBUI.esc(s.reason)}</li>`).join("")}</ul></details>`:""}
+    ${x.needsReview?`<small class="muted">Use the <b>Needs answer review</b> filter below, then edit each flagged question to set the right answer.</small>`:""}
+  </div>`;
+}
+
+async function manualBank(){
+  try{let image=null;const f=$("bmImage").files[0];if(f){const up=await GB.upload(f,()=>{});image={key:up.fileKey,fileName:up.fileName,contentType:up.contentType,size:up.size}}
+    const subject=$("bmSubject").value, roman=!!$("bmRoman").checked;
+    await GB.api("/api/admin/question-bank",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject,topicId:$("bmTopic").value,type:$("bmType").value,roman,passageId:$("bmPassageId").value,passage:bmPassage.get(),q:bmQuestion.get(),options:[$("bmA").value,$("bmB").value,$("bmC").value,$("bmD").value],answer:Number($("bmAnswer").value),explanation:$("bmExplanation").value,image})});
+    $("bankManualForm").reset();bmQuestion.clear();bmPassage.clear();say("Question added to the bank.");bank();overview();
+  }catch(e){say(e.message,"error")}
+}
+
+$("topicSubject") && $("topicSubject").addEventListener("change",()=>loadTopicsUI());
+$('bmSubject') && $('bmSubject').addEventListener('change',()=>refreshTopicSelector('bmTopic',$('bmSubject').value,{force:true}));
+$("bsubject") && $("bsubject").addEventListener("change",()=>refreshTopicSelector("btopic",$("bsubject").value,{force:true}));
+$("refreshBTopics") && $("refreshBTopics").addEventListener("click",()=>refreshTopicSelector("btopic",$("bsubject").value,{force:true}));
+$("addTopicBtn") && $("addTopicBtn").addEventListener("click",async()=>{try{const name=$("topicName").value.trim();if(!name)throw Error("Enter a topic name.");await GB.api("/api/admin/topics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject:$("topicSubject").value,name})});$("topicName").value="";invalidateTopicCache($("topicSubject").value); await loadTopicsUI(); if($("bsubject").value===$("topicSubject").value) await refreshTopicSelector("btopic",$("bsubject").value); if($("bmSubject").value===$("topicSubject").value) await refreshTopicSelector("bmTopic",$("bmSubject").value); say("Topic created.");}catch(e){say(e.message,"error")}});
+$("reportStatus") && $("reportStatus").addEventListener("change",loadReports);
+$("reportSubject") && $("reportSubject").addEventListener("change",loadReports);
+$("reportSearch") && $("reportSearch").addEventListener("input",()=>{clearTimeout(window._reportTimer);window._reportTimer=setTimeout(loadReports,300)});
+$("loadReportsBtn") && $("loadReportsBtn").addEventListener("click",loadReports);
+document.addEventListener("click",async e=>{
+  const vt=e.target.closest("[data-view-topic]"); if(vt){const rowTopic=String(vt.dataset.viewTopic); const topicSubject=$("topicSubject").value||SUBJECTS[0]; $("bankFilter").value=topicSubject; await bank(); if([...$("bankTopicFilter").options].some(o=>o.value===rowTopic)) $("bankTopicFilter").value=rowTopic; await bank(); $("bankList").scrollIntoView({behavior:"smooth",block:"start"}); return}
+  const rn=e.target.closest("[data-ren-topic]"); if(rn){const name=prompt("Rename topic to:");if(name===null)return;try{await GB.api("/api/admin/topics/"+encodeURIComponent(rn.dataset.renTopic),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})});invalidateTopicCache($("topicSubject").value); await loadTopicsUI(); if($("bsubject").value===$("topicSubject").value) await refreshTopicSelector("btopic",$("bsubject").value,{force:true}); if($("bmSubject").value===$("topicSubject").value) await refreshTopicSelector("bmTopic",$("bmSubject").value,{force:true}); say("Topic renamed.");}catch(err){say(err.message,"error")}return}
+  const dn=e.target.closest("[data-del-topic]"); if(dn){if(!confirm("Delete this topic? Its questions will be moved to Uncategorized / Topic Not Assigned."))return;try{await GB.del("/api/admin/topics/"+encodeURIComponent(dn.dataset.delTopic));invalidateTopicCache($("topicSubject").value); await loadTopicsUI(); if($("bsubject").value===$("topicSubject").value) await refreshTopicSelector("btopic",$("bsubject").value,{force:true}); if($("bmSubject").value===$("topicSubject").value) await refreshTopicSelector("bmTopic",$("bmSubject").value,{force:true}); bank(); say("Topic deleted.");}catch(err){say(err.message,"error")}return}
+  const er=e.target.closest("[data-edit-reported]"); if(er){try{const q=bankCache.find(x=>x.id===er.dataset.editReported)||await GB.api("/api/admin/question-bank/"+encodeURIComponent(er.dataset.editReported)); editBankModal(q);}catch(err){say(err.message,"error")}return}
+  const rs=e.target.closest("[data-report-status]"); if(rs){try{await GB.api("/api/admin/question-reports/"+encodeURIComponent(rs.dataset.reportStatus),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:rs.dataset.status})});await loadReports();say("Report status updated.");}catch(err){say(err.message,"error")}return}
+});
+
+document.addEventListener("click",e=>{
+  const rm=e.target.closest("[data-remove-set-section]"); if(rm){rm.closest(".set-section").remove();[...document.querySelectorAll("#setSections .set-section")].forEach((r,i)=>r.querySelector(".section-head b").textContent=`Subject section ${i+1}`);return}
+  const add=e.target.closest("[data-add-set-q]"); if(add){addSetQuestion(add.closest(".set-section"));return}
+  const rmq=e.target.closest("[data-remove-set-q]"); if(rmq){const row=rmq.closest(".set-section");rmq.closest(".set-qblock").remove();[...row.querySelectorAll(".set-qblock")].forEach((r,i)=>r.querySelector(".qhead b").textContent=`Question ${i+1}`);return}
+});
+
+/* ----------------------------- existing tests ------------------------- */
+async function tests(){
+  const list=await GB.api("/api/admin/tests");
+  const filter=$("cbtStatusFilter")?.value||"all";
+  const filtered=list.filter(t=>filter==="published"?t.published:filter==="draft"?!t.published:filter==="held"?t.resultVisibility==="held"&&!t.resultReleased:true);
+  const totalQ=list.reduce((n,t)=>n+(Number(t.questionCount)||0),0);
+  if($("cbtTotalKpi"))$("cbtTotalKpi").textContent=list.length;
+  if($("cbtPublishedKpi"))$("cbtPublishedKpi").textContent=list.filter(t=>t.published).length;
+  if($("cbtQuestionKpi"))$("cbtQuestionKpi").textContent=totalQ;
+  $("testsList").innerHTML=filtered.length?filtered.map(t=>{
+    const resultHeld=t.resultVisibility==="held"&&!t.resultReleased;
+    return `<article class="assessment-row"><div class="assessment-main"><div class="assessment-title"><span class="assessment-icon">▦</span><div><b>${GBUI.esc(t.title)}</b><small>${GBUI.esc(t.subject)} • ${t.questionCount||0} questions • ${t.duration} min • ${t.sectionCount||1} section${(t.sectionCount||1)===1?"":"s"}</small></div></div><div class="assessment-meta"><span class="pill ${t.published?"good":"muted"}">${t.published?"Published":"Draft"}</span><span class="pill">${t.access==="activated"?"🔒 Activated only":"🌐 Everyone"}</span><span class="pill">${t.oneAttempt!==false?"1 attempt":"Multiple attempts"} <span class="pill">Pass ${Number(t.passMark)||50}%</span></span><span class="pill ${resultHeld?"warn":"good"}">${resultHeld?"Results held":"Results available"}</span></div></div><div class="assessment-actions"><button class="btn light" type="button" data-preview-test="${GBUI.esc(t.id)}">Preview</button><button class="btn light" type="button" data-edit-test="${GBUI.esc(t.id)}">Edit</button>${resultHeld?`<button class="btn primary" type="button" data-release-results="${GBUI.esc(t.id)}">Release results</button>`:""}<button class="btn light" type="button" data-toggle-test="${GBUI.esc(t.id)}" data-pub="${t.published?0:1}">${t.published?"Unpublish":"Publish"}</button><button class="btn danger" type="button" data-del-test="${GBUI.esc(t.id)}">Delete</button></div></article>`;
+  }).join(""):"<div class='empty-state'><b>No assessments in this view.</b><p class='muted'>Create an assessment above or change the filter.</p></div>";
+}
+
+function previewAssessment(t){
+  const modal=document.createElement("div"); modal.className="modal";
+  const qs=Array.isArray(t.questions)?t.questions:[];
+  modal.innerHTML=`<div class="modal-box wide assessment-preview" role="dialog" aria-modal="true"><div class="section-head"><div><span class="eyebrow">STUDENT PREVIEW</span><h2>${GBUI.esc(t.title)}</h2><small>${GBUI.esc(t.subject)} • ${qs.length} questions • ${t.duration} minutes</small></div><button class="btn light" type="button" data-close-preview>Close</button></div><div class="preview-instructions">${t.instructions?GBUI.renderBody(t.instructions,"html"):"No special instructions."}${Number.isFinite(Number(t.passMark))?`<p><b>Pass mark:</b> ${Number(t.passMark)||50}%</p>`:""}</div><div class="preview-questions">${qs.map((q,i)=>`<article class="preview-q"><div class="preview-qno">Question ${i+1} <span>${GBUI.esc(q.topic||"")}</span></div>${q.passage?`<div class="preview-passage">${GBUI.renderBody(q.passage,"html")}</div>`:""}<div class="preview-text">${GBUI.renderBody(q.q||"","html")}</div><div class="preview-options">${(q.options||[]).map((o,k)=>`<div><b>${"ABCD"[k]}.</b> ${GBUI.renderBody(o,"html")}</div>`).join("")}</div><small>${Number(q.marks)||1} mark${Number(q.marks)==1?"":"s"}</small></article>`).join("")||"<p class='muted'>No questions yet.</p>"}</div></div>`;
+  document.body.appendChild(modal);document.body.classList.add("noscroll");modal.addEventListener("click",e=>{if(e.target===modal||e.target.closest("[data-close-preview]")){modal.remove();document.body.classList.remove("noscroll")}});
+}
+/* ----------------------------- CBT editor ------------------------------ */
+function editTestModal(t){
+  const modal=document.createElement("div");modal.className="modal";const fields=Array.isArray(t.studentFields)&&t.studentFields.length?t.studentFields:[{key:"full_name",label:"Full Name",type:"text",required:true,leaderboard:true}];
+  modal.innerHTML=`<div class="modal-box wide" role="dialog" aria-modal="true"><div class="section-head"><div><span class="eyebrow">ASSESSMENT SETTINGS</span><h2>Edit CBT</h2></div><button class="btn light" type="button" data-cancel>✕</button></div><div class="formgrid"><div class="field full"><label>Assessment title</label><input id="etTitle" maxlength="200" value="${GBUI.esc(t.title||"")}"></div><div class="field"><label>Subject</label><input value="${GBUI.esc(t.subject||"")}" readonly></div><div class="field"><label>Duration (minutes)</label><input id="etDuration" type="number" min="1" max="240" value="${Number(t.duration)||40}"></div><div class="field full"><label>Instructions</label><textarea id="etInstructions" rows="4">${GBUI.esc(String(t.instructions||"").replace(/<[^>]*>/g,""))}</textarea></div><div class="field"><label>Pass mark (%)</label><input id="etPassMark" type="number" min="0" max="100" value="${Number(t.passMark)||50}"></div><div class="field"><label>Result visibility</label><select id="etResultVisibility"><option value="immediate" ${t.resultVisibility!=="held"?"selected":""}>Show result after submission</option><option value="held" ${t.resultVisibility==="held"?"selected":""}>Hold until Admin releases</option></select></div><label class="setting-toggle"><input id="etOneAttempt" type="checkbox" ${t.oneAttempt!==false?"checked":""}><span><b>One Attempt</b><small>Server-enforced.</small></span></label><label class="setting-toggle"><input id="etShuffleQ" type="checkbox" ${t.shuffleQuestions!==false?"checked":""}><span><b>Shuffle Questions</b></span></label><label class="setting-toggle"><input id="etShuffleO" type="checkbox" ${t.shuffleOptions!==false?"checked":""}><span><b>Shuffle Options</b></span></label><div class="field"><label>Access</label><select id="etAccess"><option value="all" ${t.access!=="activated"?"selected":""}>Everyone</option><option value="activated" ${t.access==="activated"?"selected":""}>Activated Students Only 🔒</option></select></div><label class="check"><input id="etPub" type="checkbox" ${t.published?"checked":""}> Published</label><div class="field full"><div class="section-head"><b>Sections</b><button class="btn light" type="button" id="etAddSection">＋ Add section</button></div><div id="etSections"></div></div><div class="field full"><div class="section-head"><b>Student Information Form</b><button class="btn light" type="button" id="etAddField">＋ Add field</button></div><div id="etFields"></div></div><div class="field full"><label>Question to edit</label><select id="etIndex">${(t.questions||[]).map((q,i)=>`<option value="${i}">Question ${i+1}</option>`).join("")}</select></div><div class="field full"><label>Passage Group ID</label><input id="etPassageId"><label>Shared passage / context</label><textarea id="etPassage" rows="5"></textarea></div><div class="field full"><label>Question</label><textarea id="etQ" rows="5"></textarea></div>${[0,1,2,3].map(n=>`<div class="field"><label>Option ${"ABCD"[n]}</label><input id="etO${n}" maxlength="1000"></div>`).join("")}<div class="field"><label>Marks</label><input id="etMarks" type="number" min="0.1" step="0.1" value="1"></div><div class="field"><label>Correct option</label><select id="etA">${[0,1,2,3].map(n=>`<option value="${n}">${"ABCD"[n]}</option>`).join("")}</select></div><label class="check"><input id="etRoman" type="checkbox"> Roman-numeral I–IV</label><div class="field full"><label>Explanation</label><textarea id="etExp" rows="3"></textarea></div></div><p class="error" id="etErr"></p><div class="factions" style="justify-content:flex-end"><button class="btn light" type="button" data-cancel>Cancel</button><button class="btn primary" type="button" data-save>Save CBT changes</button></div></div>`;
+  document.body.appendChild(modal);document.body.classList.add("noscroll");const secHost=modal.querySelector("#etSections"),fieldHost=modal.querySelector("#etFields");
+  const addSec=(sec={})=>{const id=sec.id||crypto.randomUUID();secHost.insertAdjacentHTML("beforeend",`<div class="assessment-section card soft" data-id="${GBUI.esc(id)}"><div class="formgrid"><div class="field"><label>Section title</label><input class="et-sec-title" value="${GBUI.esc(sec.title||"Section")}"></div><div class="field full"><label>Instructions</label><textarea class="et-sec-inst" rows="2">${GBUI.esc(sec.instructions||"")}</textarea></div></div><button class="btn light" type="button" data-remove-edit-section>Remove</button></div>`)};(t.sections&&t.sections.length?t.sections:[{title:"General"}]).forEach(addSec);
+  const addField=(f={})=>{fieldHost.insertAdjacentHTML("beforeend",`<div class="student-field-row card soft" data-edit-field><div class="formgrid"><div class="field"><label>Label</label><input class="ef-label" value="${GBUI.esc(f.label||"New field")}"></div><div class="field"><label>Type</label><select class="ef-type"><option value="text">Text</option><option value="email">Email</option><option value="tel">Phone</option><option value="number">Number</option><option value="textarea">Long text</option><option value="select">Dropdown</option></select></div><div class="field"><label>Key</label><input class="ef-key" value="${GBUI.esc(f.key||"")}"></div><div class="field ef-opt-wrap"><label>Options</label><input class="ef-opt" value="${GBUI.esc((f.options||[]).join(", "))}"></div></div><div class="field-actions"><label class="check"><input class="ef-required" type="checkbox" ${f.required!==false?"checked":""}> Required</label><label class="check"><input class="ef-leaderboard" type="checkbox" ${f.leaderboard?"checked":""}> Leaderboard</label><button class="btn light" type="button" data-remove-edit-field>Remove</button></div></div>`);const r=fieldHost.lastElementChild;r.querySelector('.ef-type').value=f.type||'text';const u=()=>r.querySelector('.ef-opt-wrap').hidden=r.querySelector('.ef-type').value!=="select";r.querySelector('.ef-type').addEventListener('change',u);u()};fields.forEach(addField);
+  modal.querySelector("#etAddSection").onclick=()=>addSec();modal.querySelector("#etAddField").onclick=()=>addField();const idx=modal.querySelector("#etIndex");const loadQ=()=>{const q=t.questions[Number(idx.value)]||{};modal.querySelector("#etPassageId").value=q.passageId||"";modal.querySelector("#etPassage").value=String(q.passage||"").replace(/<[^>]*>/g,"");modal.querySelector("#etQ").value=String(q.q||"").replace(/<[^>]*>/g,"");[0,1,2,3].forEach(n=>modal.querySelector("#etO"+n).value=String((q.options||[])[n]||"").replace(/<[^>]*>/g,""));modal.querySelector("#etA").value=String(Number.isInteger(Number(q.answer))?Number(q.answer):0);modal.querySelector("#etExp").value=String(q.explanation||"").replace(/<[^>]*>/g,"");modal.querySelector("#etRoman").checked=!!q.roman;modal.querySelector("#etMarks").value=String(Number(q.marks)>0?Number(q.marks):1)};idx.addEventListener("change",loadQ);loadQ();const close=()=>{modal.remove();document.body.classList.remove("noscroll")};
+  modal.addEventListener("click",async e=>{if(e.target===modal||e.target.closest("[data-cancel]"))return close();if(e.target.closest("[data-remove-edit-section]")){e.target.closest('[data-id]')?.remove();return}if(e.target.closest("[data-remove-edit-field]")){e.target.closest('[data-edit-field]')?.remove();return}if(!e.target.closest("[data-save]"))return;const err=modal.querySelector("#etErr"),i=Number(idx.value),q=t.questions[i]||{};const nq={...q,passageId:modal.querySelector("#etPassageId").value.trim(),passage:modal.querySelector("#etPassage").value,q:modal.querySelector("#etQ").value,options:[0,1,2,3].map(n=>modal.querySelector("#etO"+n).value.trim()),answer:Number(modal.querySelector("#etA").value),marks:Number(modal.querySelector("#etMarks").value)||1,explanation:modal.querySelector("#etExp").value,roman:modal.querySelector("#etRoman").checked};if(!nq.q.trim()||nq.options.some(v=>!v)){err.textContent="Question text and all four options are required.";return}const sections=[...secHost.querySelectorAll('[data-id]')].map(r=>({id:r.dataset.id,title:r.querySelector('.et-sec-title').value.trim()||'Section',instructions:r.querySelector('.et-sec-inst').value}));const next=t.questions.map((x,j)=>j===i?nq:x);const studentFields=[...fieldHost.querySelectorAll('[data-edit-field]')].map((r,j)=>({key:(r.querySelector('.ef-key').value||`field_${j+1}`).trim(),label:r.querySelector('.ef-label').value.trim()||`Field ${j+1}`,type:r.querySelector('.ef-type').value,required:r.querySelector('.ef-required').checked,leaderboard:r.querySelector('.ef-leaderboard').checked,options:r.querySelector('.ef-opt').value.split(',').map(v=>v.trim()).filter(Boolean)}));try{await GB.api("/api/admin/tests/"+encodeURIComponent(t.id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:modal.querySelector("#etTitle").value,duration:Number(modal.querySelector("#etDuration").value),instructions:modal.querySelector("#etInstructions").value,passMark:Number(modal.querySelector("#etPassMark").value),oneAttempt:modal.querySelector("#etOneAttempt").checked,resultVisibility:modal.querySelector("#etResultVisibility").value,shuffleQuestions:modal.querySelector("#etShuffleQ").checked,shuffleOptions:modal.querySelector("#etShuffleO").checked,published:modal.querySelector("#etPub").checked,access:modal.querySelector("#etAccess").value,sections,studentFields,questions:next})});close();say("CBT updated successfully.");tests();overview()}catch(x){err.textContent=x.message}});
+}
+/* ---------------------------- announcements --------------------------- */
+let annCache=[], annRemoved=new Set();
+async function anns(){
+  annCache=await GB.api("/api/admin/announcements");
+  const cards=annCache.map(a=>`<div class="anncard">
+    <div class="matmeta"><small>${new Date(a.createdAt||a.date||Date.now()).toLocaleString()}</small><span class="tc">${a.published?"✅ Published":"🕓 Draft"}</span></div>
+    <h3>${GBUI.esc(a.title)}</h3>
+    <div class="rich">${GBUI.renderBody(a.body,a.bodyFormat||a.format)}</div>
+    ${GBUI.media((a.attachments||a.media||[]).filter(f=>["image","video","audio"].includes(GBUI.kindOf(f))))}
+    ${GBUI.files((a.attachments||a.media||[]).filter(f=>!["image","video","audio"].includes(GBUI.kindOf(f))))}
+    <div class="factions">
+      <button class="btn light" type="button" data-edit-ann="${GBUI.esc(a.id)}">✎ Edit</button>
+      <button class="btn light" type="button" data-toggle-ann="${GBUI.esc(a.id)}" data-pub="${a.published?0:1}">${a.published?"Unpublish":"Publish"}</button>
+      <button class="btn danger" type="button" data-del-ann="${GBUI.esc(a.id)}">Delete</button>
+    </div></div>`);
+  $("annList").innerHTML=annCache.length?GBUI.collapsible("admAnn",cards,4):'<p class="muted">No announcements yet.</p>';
+}
+function renderExistingAnnMedia(items){
+  const list=Array.isArray(items)?items:[];
+  $("aExistingMedia").innerHTML=list.length?list.map(f=>`<div class="filerow" data-existing-key="${GBUI.esc(f.key||"")}"><span class="fic">${String(f.contentType||"").startsWith("video/")?"🎬":"📎"}</span><span class="fname">${GBUI.esc(f.fileName||"Attachment")}</span><button class="btn danger" type="button" data-ann-remove="${GBUI.esc(f.key||"")}">Remove</button></div>`).join(""):"<small class='muted'>No existing attachment.</small>";
+}
+function startAnnEdit(a){
+  annRemoved=new Set();
+  $("aeditId").value=a.id; $("atitle").value=a.title||""; abody.set(a.body||""); $("apub").checked=!!a.published;
+  $("annFormTitle").textContent="Edit announcement"; $("annSubmit").textContent="Save changes"; $("annCancelEdit").hidden=false;
+  renderExistingAnnMedia(a.attachments||a.media||[]);
+  $("aprog").textContent="Remove old files above, then save the announcement to apply the changes.";
+  $("annForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function resetAnnForm(){
+  annRemoved=new Set(); $("annForm").reset(); abody.clear(); $("aeditId").value=""; $("aprog").textContent=""; $("aExistingMedia").innerHTML="";
+  $("annFormTitle").textContent="Post Announcement"; $("annSubmit").textContent="Post announcement"; $("annCancelEdit").hidden=true; $("apub").checked=true;
+}
+
+/* --------------------------- feedback & ratings ------------------------ */
+let fbCache={items:[],summary:{}};
+function stars(n){ const k=Math.round(Number(n)||0); return "★".repeat(k)+"☆".repeat(Math.max(0,5-k)); }
+async function feedback(){
+  fbCache=await GB.api("/api/admin/feedback");
+  let questionReports=[];
+  try{ questionReports=await GB.api("/api/admin/question-reports"); }catch{}
+  fbCache.questionReports=Array.isArray(questionReports)?questionReports:[];
+  const s=fbCache.summary||{};
+  const max=Math.max(1,...(s.breakdown||[]).map(b=>b.count));
+  const pendingReports=(fbCache.questionReports||[]).filter(r=>r.status==="Pending").length;
+  $("fbSummary").innerHTML=`<div class="rating-summary">
+    <div class="rating-big"><strong>${s.average||0}</strong><span class="rating-stars">${stars(s.average)}</span><small>${s.total||0} rating${s.total===1?"":"s"}</small></div>
+    <div class="rating-bars">${(s.breakdown||[]).map(b=>`<div class="rating-bar"><span>${b.star}★</span><i><span style="display:block;width:${Math.round((b.count/max)*100)}%"></span></i><span>${b.count}</span></div>`).join("")}</div>
+    <div class="statgrid compact">
+      <div class="statcard plain"><div class="ic">💬</div><strong>${(fbCache.items||[]).length}</strong><small>Messages</small></div>
+      <div class="statcard plain"><div class="ic">🚩</div><strong>${s.complaints||0}</strong><small>Complaints</small></div>
+      <div class="statcard plain"><div class="ic">⚠️</div><strong>${pendingReports}</strong><small>Pending question reports</small></div>
+    </div></div>
+    <div class="card" style="margin-top:12px"><div class="section-head"><h3>Question Reports</h3><button class="btn light" type="button" id="fbReportsRefresh">↻ Refresh</button></div><div id="fbReportsList"></div></div>`;
+  badge("feedback",(Number(s.unresolved)||0)+pendingReports);
+  renderFeedbackList();
+  renderQuestionReportsInFeedback();
+  $("fbReportsRefresh")?.addEventListener("click",feedback);
+}
+function renderQuestionReportsInFeedback(){
+  const rows=fbCache.questionReports||[];
+  const host=$("fbReportsList"); if(!host)return;
+  host.innerHTML=rows.length?GBUI.collapsible("fbReportsMore",rows.slice(0,100).map(r=>`<div class="fbcard">
+    <div class="matmeta"><small>${new Date(r.createdAt||Date.now()).toLocaleString()}</small><span class="pill warn">${GBUI.esc(r.status||"Pending")}</span></div>
+    <div class="fbhead"><b>${GBUI.esc(r.studentName||"Student")}</b><small>${GBUI.esc(r.studentUsername||"")}</small></div>
+    <h4>🚩 ${GBUI.esc(r.reason||"Question report")}</h4>
+    <p><b>Question:</b> ${GBUI.renderBody(r.questionText||"","html")}</p>
+    ${r.details?`<p><b>Details:</b> ${GBUI.esc(r.details)}</p>`:""}
+  </div>`).join("")):'<p class="muted">No question reports.</p>';
+}
+function renderFeedbackList(){
+  const mode=$("fbFilter").value||"";
+  const items=(fbCache.items||[]).filter(f=>mode==="open"?!f.resolved:mode?f.kind===mode:true);
+  const cards=items.map(f=>`<div class="fbcard ${f.resolved?"done":""}">
+    <div class="matmeta"><small>${new Date(f.createdAt||Date.now()).toLocaleString()}</small>
+      <span class="pill ${f.kind==="complaint"?"bad":f.kind==="suggestion"?"warn":"good"}">${f.kind==="complaint"?"🚩 Complaint":f.kind==="suggestion"?"💡 Suggestion":"💬 Feedback"}</span></div>
+    <div class="fbhead"><b>${GBUI.esc(f.name||"Student")}</b><small>${GBUI.esc(f.username||"")}${f.email?" • "+GBUI.esc(f.email):""}</small>
+      <span class="rating-stars big">${stars(f.rating)}</span></div>
+    <h4>${GBUI.esc(f.subject||"Feedback")}</h4>
+    <p>${GBUI.esc(f.message||"").replace(/\n/g,"<br>")}</p>
+    ${f.reply?`<div class="notice" style="margin-top:10px"><b>Current admin reply:</b><br>${GBUI.esc(f.reply).replace(/\n/g,"<br>")}</div>`:""}
+    <div class="field full" style="margin-top:10px"><label>Reply to this student</label><textarea rows="3" data-fb-reply-input="${GBUI.esc(f.id)}" maxlength="2000" placeholder="Write a clear reply.">${GBUI.esc(f.reply||"")}</textarea></div>
+    <div class="factions">
+      <button class="btn primary" type="button" data-fb-reply="${GBUI.esc(f.id)}">${f.reply?"Update reply":"Reply"}</button>
+      <button class="btn light" type="button" data-fb-resolve="${GBUI.esc(f.id)}" data-done="${f.resolved?1:0}">${f.resolved?"↺ Mark as not handled":"✓ Mark as handled"}</button>
+      <button class="btn danger" type="button" data-fb-del="${GBUI.esc(f.id)}">Delete</button>
+    </div></div>`);
+  $("fbList").innerHTML=cards.length?GBUI.collapsible("fbMore",cards,5):'<p class="muted">No messages match this filter.</p>';
+}
+
+/* -------------------------- leaderboard controls --------------------- */
+function initLeaderboardControls(){
+  if(!$("lbSubject")) return;
+  $("lbSubject").innerHTML=GBUI.SUBJECTS.map(s=>`<option value="${GBUI.esc(s)}">${GBUI.esc(s)}</option>`).join("");
+  $("clearLbSubject").onclick=async()=>{const subject=$("lbSubject").value;if(!await GBUI.confirmAction(`Clear ${subject} leaderboard?`,`Only the ranking is reset. Student CBT records remain intact.`,`Yes, clear leaderboard`))return;try{const x=await GB.api('/api/admin/leaderboard/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject})});$("lbStatus").textContent=x.message}catch(e){$("lbStatus").textContent=e.message}};
+  $("clearLbAll").onclick=async()=>{if(!await GBUI.confirmAction('Clear general leaderboard?','Student CBT records and dashboard history will not be deleted.','Yes, clear general leaderboard'))return;try{const x=await GB.api('/api/admin/leaderboard/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:''})});$("lbStatus").textContent=x.message}catch(e){$("lbStatus").textContent=e.message}};
+}
+
+/* --------------------------- admin account ---------------------------- */
+async function account(){
+  try{
+    const a=await GB.api("/api/admin/account");
+    $("curEmail").textContent=a.email||"not set";
+    if($("curUsername"))$("curUsername").textContent=a.username||"—";
+  }catch(err){ if($("curEmail"))$("curEmail").textContent="Unavailable"; if($("curUsername"))$("curUsername").textContent="Unavailable"; }
+}
+
+
+/* ------------------------------- wiring -------------------------------- */
+function wire(){
+  $("noteForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const btn=$("saveMaterialBtn");
+    const status=$("nprog"), bar=$("nprogress"), barFill=$("nprogressBar");
+    if(btn) {btn.disabled=true;btn.textContent="Saving material…";}
+    bar.hidden=false; barFill.style.width="0%";
+    try{
+      status.textContent="Preparing material — 0%.";
+      const attachments=await uploadAll($("nfiles"),status,barFill);
+      const embedded=nbody.getEmbedded ? nbody.getEmbedded() : [];
+      const allAttachments=[...attachments,...embedded.filter(e=>e.key && !attachments.some(a=>a.fileKey===e.key || a.key===e.key))];
+      status.textContent="Saving material to central storage — 99%.";
+      const saved=await GB.api("/api/admin/notes",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({title:$("ntitle").value,subject:$("nsubject").value,topic:$("ntopic").value,
+          body:nbody.get(),attachments:allAttachments,published:$("npub").checked,access:$("naccess").value})});
+      barFill.style.width="100%";
+      status.textContent=saved.published?"Material saved and published successfully — 100%.":"Material saved as a draft — 100%.";
+      $("noteForm").reset(); nbody.clear();
+      say(saved.published?"Material saved and published successfully.":"Material saved successfully.");
+      notes(); overview();
+    }catch(err){status.textContent="Save failed.";say(err.message,"error")}
+    finally{ if(btn){btn.disabled=false;btn.textContent="Save material";} }
+  });
+
+  $("addQ").onclick=()=>{addQuestion();syncQuestionSections();};
+  $("addAssessmentSection")?.addEventListener("click",()=>addAssessmentSection());
+  $("cbtStatusFilter")?.addEventListener("change",tests);
+  if(!$("assessmentSections")?.children.length) addAssessmentSection("General");
+  // Normal CBT builder: manual questions OR question-bank pool.
+  const bankBuilder=$("tBankBuilder"), manualQs=$("qs")?.closest(".field.full");
+  async function loadTestBankTopics(){
+    const subject=$("tBankSubject")?.value; if(!subject)return;
+    try{
+      const rows=await GB.api("/api/admin/topics?subject="+encodeURIComponent(subject));
+      $("tBankTopics").innerHTML=rows.length?rows.map(t=>`<label class="card" style="display:block;cursor:pointer"><input class="t-bank-topic" type="checkbox" value="${GBUI.esc(t.id)}"> <b>${GBUI.esc(t.name)}</b><small class="muted"> — ${t.count} question${t.count===1?"":"s"}</small></label>`).join(""):"<p class='muted'>No topics are available for this subject yet.</p>";
+      $("tBankTopics").querySelectorAll(".t-bank-topic").forEach(x=>x.onchange=updateTestBankPool);
+      updateTestBankPool();
+    }catch(e){$("tBankTopics").innerHTML=`<p class="error">${GBUI.esc(e.message)}</p>`}
+  }
+  function updateTestBankPool(){
+    const boxes=[...document.querySelectorAll(".t-bank-topic:checked")], total=boxes.reduce((n,b)=>n+Number((b.closest("label")?.querySelector("small")?.textContent||"").match(/\d+/)?.[0]||0),0);
+    const multi=boxes.length>1; const max=boxes.length?(multi?Math.min(1000,total):Math.min(40,total)):1;
+    $("tBankCount").max=Math.max(1,max); if(Number($("tBankCount").value)>max)$("tBankCount").value=max;
+    $("tBankPoolInfo").textContent=boxes.length?`${boxes.length} topic${multi?"s":""} selected • ${total} questions available in the combined pool.`:"Select at least one topic.";
+  }
+  function toggleTestSource(){
+    const bank=$("tQuestionSource").value==="bank"; bankBuilder.hidden=!bank;
+    if(manualQs)manualQs.hidden=bank;
+    if(bank){ $("tBankSubject").innerHTML=SUBJECTS.map(s=>`<option>${GBUI.esc(s)}</option>`).join(""); loadTestBankTopics(); }
+  }
+  $("tQuestionSource").onchange=toggleTestSource;
+  $("tBankSubject").onchange=loadTestBankTopics;
+  $("tBankSelectAll").onclick=()=>{const bs=[...document.querySelectorAll(".t-bank-topic")], all=bs.length&&bs.every(x=>x.checked);bs.forEach(x=>x.checked=!all);updateTestBankPool()};
+  toggleTestSource();
+  $("tImportBtn").onclick=importTestQuestions;
+  $("qs").addEventListener("click",e=>{
+    if(!e.target.closest("[data-remove-q]")) return;
+    e.target.closest(".qblock").remove();
+    [...document.querySelectorAll("#qs .qblock")].forEach((b,i)=>b.querySelector(".qhead b").textContent="Question "+(i+1));
+  });
+  $("testForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    try{
+      const source=$("tQuestionSource").value, subject=$("tsubject").value;
+      let questions=[], questionPool=[], questionPoolCount=0, topicIds=[];
+      if(source==="bank"){
+        const bankSubject=$("tBankSubject").value; topicIds=[...document.querySelectorAll(".t-bank-topic:checked")].map(x=>x.value); const count=Math.max(1,Number($("tBankCount").value)||1);
+        if(!topicIds.length){say("Select at least one topic for the question-bank pool.","error");return}
+        const pool=await GB.api("/api/admin/question-bank?subject="+encodeURIComponent(bankSubject));
+        const filtered=pool.filter(q=>q&&["mcq","passage","cloze"].includes(q.type||"mcq")&&Array.isArray(q.options)&&q.options.length===4&&topicIds.includes(String(q.topicId||"")));
+        if(count>filtered.length){say(`Only ${filtered.length} eligible questions are available in the selected topic pool.`,"error");return}
+        questionPool=filtered; questionPoolCount=count;
+      }else{
+        const blocks=[...document.querySelectorAll("#qs .qblock")];
+        if(!blocks.length){say("Add at least one question before saving the CBT.","error");return}
+        questions=await prepareQuestions(blocks);
+        const blank=questions.findIndex(q=>!String(q.q||"").replace(/<[^>]*>/g,"").trim());
+        if(blank>=0){say(`Question ${blank+1} has no text yet.`,"error");return}
+      }
+      await GB.api("/api/admin/tests",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:$("ttitle").value,subject,duration:Number($("tduration").value),shuffleQuestions:$("tshuffleQ").checked,shuffleOptions:$("tshuffleO").checked,questions,questionPool,questionPoolCount,questionPoolTopicIds:topicIds,randomizeQuestionPool:$("tRandomizePool")?.checked!==false,published:$("tpub").checked,access:$("taccess").value,instructions:$("tinstructions").value,oneAttempt:$("toneAttempt").checked,resultVisibility:$("tresultVisibility").value,passMark:Number($("tPassMark").value),studentFields:collectStudentFields(),sections:assessmentSectionRows()})});
+      $("testForm").reset();$("qs").innerHTML="";$("assessmentSections").innerHTML="";addAssessmentSection("General");addQuestion();$("tduration").value=subject==="Mathematics"?50:40;say(`CBT saved with ${source==="bank"?questionPoolCount:questions.length} question${(source==="bank"?questionPoolCount:questions.length)===1?"":"s"}.`);tests();overview();
+    }catch(err){say(err.message,"error")}
+  });
+
+
+  // Gifted Brainz AI Question Studio
+  $("tAiGenerateBtn")?.addEventListener("click",async()=>{
+    const btn=$("tAiGenerateBtn"),msg=$("tAiMsg"),subject=$("tsubject").value;
+    if(!subject){msg.className="error";msg.textContent="Choose this assessment's subject first.";return}
+    btn.disabled=true;btn.textContent="Generating…";msg.className="muted";msg.textContent="Gifted Brainz AI is preparing draft questions and checking the basics…";
+    try{
+      const x=await GB.api("/api/admin/ai/generate-questions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({exam:"UTME/JAMB",subject,topic:$("tAiTopic").value,count:Number($("tAiCount").value)||5,difficulty:$("tAiDifficulty").value})});
+      const rows=x.questions||[];
+      if(!rows.length){msg.className="error";msg.textContent="AI did not return any usable questions. Try a different topic or count.";return}
+      for(const q of rows){ addQuestion(); fillQuestionBlock($("qs").lastElementChild,{...q,sectionId:""}); }
+      msg.className="success";msg.textContent=`${rows.length} draft question${rows.length===1?'':'s'} added to the Question Builder below.${x.duplicatesDropped?` (${x.duplicatesDropped} duplicate${x.duplicatesDropped===1?'':'s'} skipped.)`:''} Review every one before saving.`;
+      $("qs").lastElementChild?.scrollIntoView({behavior:"smooth",block:"center"});
+    }catch(err){msg.className="error";msg.textContent=err.message}
+    finally{btn.disabled=false;btn.textContent="Generate questions with AI →"}
+  });
+  $("aiGenForm")?.addEventListener("submit",async e=>{e.preventDefault();const btn=$("aiGenerateBtn"),msg=$("aiGenMsg"),card=$("aiPreviewCard"),host=$("aiPreview");btn.disabled=true;btn.textContent="Generating…";msg.className="muted";msg.textContent="Gifted Brainz AI is preparing draft questions and checking the basics…";try{const x=await GB.api("/api/admin/ai/generate-questions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({exam:$("aiExam").value,subject:$("aiSubject").value,topic:$("aiTopic").value,count:Number($("aiCount").value),difficulty:$("aiDifficulty").value,objective:$("aiObjective").value})});window.aiDraft=x.questions||[];card.hidden=false;const check=q=>{const issues=[];if(!q.q?.trim())issues.push("Missing question text");if(!Array.isArray(q.options)||q.options.length!==4)issues.push("Must have exactly four options");if(!Number.isInteger(Number(q.answer))||Number(q.answer)<0||Number(q.answer)>3)issues.push("Invalid correct answer");if(q.options&&new Set(q.options.map(v=>String(v).trim().toLowerCase())).size<q.options.length)issues.push("Duplicate options");if(!q.explanation?.trim())issues.push("Missing explanation");return issues};host.innerHTML=window.aiDraft.map((q,i)=>{const issues=check(q);return `<article class="ai-draft card soft" data-ai-index="${i}"><div class="section-head"><b>Question ${i+1}</b><span class="pill ${issues.length?'warn':'good'}">${issues.length?issues.join(' • '):'Basic checks passed'}</span></div><div class="field"><label>Question</label><textarea class="aid-q" rows="3">${GBUI.esc(q.q||"")}</textarea></div><div class="formgrid">${[0,1,2,3].map(k=>`<div class="field"><label>Option ${"ABCD"[k]}</label><input class="aid-o" value="${GBUI.esc(q.options?.[k]||"")}"></div>`).join("")}</div><div class="formgrid"><div class="field"><label>Correct option</label><select class="aid-a">${[0,1,2,3].map(k=>`<option value="${k}" ${Number(q.answer)===k?'selected':''}>${"ABCD"[k]}</option>`).join("")}</select></div><div class="field"><label>Explanation</label><textarea class="aid-e" rows="3">${GBUI.esc(q.explanation||"")}</textarea></div></div><button class="btn light" type="button" data-ai-regenerate="${i}">Regenerate this question</button></article>`}).join("");msg.className="success";msg.textContent=`Generated ${window.aiDraft.length} draft question${window.aiDraft.length===1?'':'s'}.${x.duplicatesDropped?` (${x.duplicatesDropped} duplicate${x.duplicatesDropped===1?'':'s'} removed.)`:''} Review every item before saving.`}catch(err){msg.className="error";msg.textContent=err.message}finally{btn.disabled=false;btn.textContent="Generate Questions with Gifted Brainz AI →"}});
+  $("aiQualityCheck")?.addEventListener("click",async()=>{try{const rows=[...document.querySelectorAll("[data-ai-index]")];const questions=rows.map(r=>({q:r.querySelector('.aid-q').value,options:[...r.querySelectorAll('.aid-o')].map(x=>x.value),answer:Number(r.querySelector('.aid-a').value),explanation:r.querySelector('.aid-e').value,topic:$("aiTopic").value}));const x=await GB.api("/api/admin/ai/check-questions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject:$("aiSubject").value,questions})});rows.forEach((r,i)=>{const c=x.checks?.find(v=>Number(v.index)===i)||x.checks?.[i];if(!c)return;const pill=r.querySelector('.pill');const bad=!c.valid||c.calculationCheck==='fail'||c.ambiguityCheck==='fail'||c.duplicateRisk==='high';pill.className=`pill ${bad?'warn':'good'}`;pill.textContent=bad?(c.issues||[]).join(' • ')||'Review required':'AI quality check passed';});say(`AI quality check completed for ${x.checked||0} question${x.checked===1?'':'s'}.`)}catch(err){say(err.message,"error")}});
+  $("aiSaveAll")?.addEventListener("click",async()=>{const rows=[...document.querySelectorAll("[data-ai-index]")];try{let saved=0;for(const r of rows){const i=Number(r.dataset.aiIndex),q=window.aiDraft[i]||{};q.q=r.querySelector('.aid-q').value;q.options=[...r.querySelectorAll('.aid-o')].map(x=>x.value);q.answer=Number(r.querySelector('.aid-a').value);q.explanation=r.querySelector('.aid-e').value;q.topic=$("aiTopic").value;q.subject=$("aiSubject").value;const issues=(q.q.trim()?[]:["Question text missing"]);if(q.options.some(v=>!v))issues.push("Option missing");if(issues.length)throw Error(`Question ${i+1}: ${issues.join(', ')}.`);await GB.api("/api/admin/question-bank",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject:q.subject,topic:q.topic,type:"mcq",q:q.q,options:q.options,answer:q.answer,explanation:q.explanation,needsReview:false})});saved++}say(`${saved} reviewed question${saved===1?'':'s'} saved to Question Bank.`);bank();overview()}catch(err){say(err.message,"error")}});
+  $("aiPreview")?.addEventListener("click",async e=>{const b=e.target.closest('[data-ai-regenerate]');if(!b)return;const i=Number(b.dataset.aiRegenerate);const topic=$("aiTopic").value;const subject=$("aiSubject").value;try{b.disabled=true;b.textContent="Regenerating…";const x=await GB.api("/api/admin/ai/generate-questions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({exam:$("aiExam").value,subject,topic,count:1,difficulty:$("aiDifficulty").value,objective:$("aiObjective").value})});if(x.questions?.[0]){window.aiDraft[i]=x.questions[0];const q=x.questions[0],row=b.closest('[data-ai-index]');row.querySelector('.aid-q').value=q.q||'';row.querySelectorAll('.aid-o').forEach((el,k)=>el.value=q.options?.[k]||'');row.querySelector('.aid-a').value=String(q.answer??0);row.querySelector('.aid-e').value=q.explanation||'';say(`Question ${i+1} regenerated.`)}else throw Error("AI did not return a replacement question.")}catch(err){say(err.message,"error")}finally{b.disabled=false;b.textContent="Regenerate this question"}});
+  $("bankImportForm").addEventListener("submit",e=>{e.preventDefault();importBankFile()});
+  $("bankManualForm").addEventListener("submit",e=>{e.preventDefault();manualBank()});
+  $("bankFilter").onchange=bank;
+  $("v-bank").addEventListener("click",e=>{const preview=e.target.closest("[data-preview-bank]");if(!preview)return;const id=preview.dataset.previewBank,q=bankCache.find(x=>String(x.id)===String(id));if(q)showBankStudentPreview(q);});
+  $("bankReviewFilter").onchange=bank;
+$("bankTopicFilter") && ($("bankTopicFilter").onchange=bank);
+  $("clearBankBtn").onclick=async()=>{
+    const subject=$("clearBankSubject").value;
+    if(!await GBUI.confirmAction(`Clear ${subject} question bank?`,`This permanently deletes every reusable question for ${subject}. Questions in other subjects will not be affected. Your admin password will also be checked.`,`Yes, clear ${subject}`,{requirePhrase:`CLEAR ${subject.toUpperCase()}`}))return;
+    try{const x=await GB.api("/api/admin/question-bank/clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject,confirmPhrase:`CLEAR ${subject.toUpperCase()}`})});say(x.message);bank();overview()}catch(err){say(err.message,"error")}
+  };
+
+  $("annForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const id=$("aeditId").value;
+    try{
+      if(id){
+        const media=await uploadAll($("afiles"),$("aprog"));
+        const existing=annCache.find(a=>a.id===id);
+        const keep=(existing?.attachments||existing?.media||[]).filter(f=>!annRemoved.has(String(f.key||""))).map(f=>({key:f.key,fileName:f.fileName,contentType:f.contentType,size:f.size}));
+        const payload={title:$("atitle").value,body:abody.get(),published:$("apub").checked,media:[...keep,...media]};
+        await GB.api("/api/admin/announcements/"+encodeURIComponent(id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+        resetAnnForm(); say("Announcement updated."); anns(); overview();
+      }else{
+        const media=await uploadAll($("afiles"),$("aprog"));
+        await GB.api("/api/admin/announcements",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({title:$("atitle").value,body:abody.get(),media,published:$("apub").checked})});
+        resetAnnForm(); say("Announcement posted."); anns(); overview();
+      }
+    }catch(err){say(err.message,"error")}
+  });
+  $("annCancelEdit").onclick=()=>resetAnnForm();
+  $("annRefresh").onclick=()=>anns();
+  $("fbRefresh").onclick=()=>feedback();
+  $("fbFilter").onchange=renderFeedbackList;
+
+
+
+
+  $("pClose").onclick=()=>{$("progressCard").hidden=true};
+  addEventListener("hashchange",()=>show((location.hash||"#overview").slice(1)));
+}
+
+/* --------------------- publish / delete actions ----------------------- */
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  const d=t.dataset;
+  try{
+    if(d.removeAssessmentSection){ const row=t.closest(".assessment-section"); if(row) row.remove(); [...document.querySelectorAll("#assessmentSections .assessment-section")].forEach((r,i)=>r.querySelector(".section-head b").textContent=`Section ${i+1}`); syncQuestionSections(); }
+    else if(d.removeStudentField){ t.closest("[data-student-field]")?.remove(); }
+    else if(d.previewTest){ try{ const item=await GB.api("/api/admin/tests/"+encodeURIComponent(d.previewTest)); previewAssessment(item); }catch(err){ say(err.message,"error"); } }
+    else if(d.releaseResults){ if(!await GBUI.confirmAction("Release results?","Students who have results for this assessment will be notified and can view them inside EduSpace.","Release results"))return; const r=await GB.api("/api/admin/tests/"+encodeURIComponent(d.releaseResults)+"/release-results",{method:"POST"}); say(`${r.notified||0} student result${r.notified===1?"":"s"} released.`); tests(); overview(); }
+    else if(d.editNote){ const list=await GB.api("/api/admin/notes"); const n=list.find(x=>x.id===d.editNote); if(n) editNoteModal(n); }
+    else if(d.editBank){ const q=bankCache.find(x=>x.id===d.editBank); if(q) editBankModal(q); }
+    else if(d.editTest){ try{ const t=await GB.api("/api/admin/tests/"+encodeURIComponent(d.editTest)); editTestModal(t); }catch(err){ say(err.message,"error"); } }
+    else if(d.annRemove){ annRemoved.add(String(d.annRemove)); const row=t.closest('[data-existing-key]'); if(row)row.remove(); if(!$("aExistingMedia").children.length)$("aExistingMedia").innerHTML="<small class='muted'>All existing attachments are marked for deletion. Save the announcement to apply it.</small>"; }
+    else if(d.fbReply){ const input=document.querySelector(`[data-fb-reply-input="${CSS.escape(d.fbReply)}"]`); if(input){await GB.api('/api/admin/feedback/'+encodeURIComponent(d.fbReply),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({reply:input.value.trim(),resolved:!!input.value.trim()})}); feedback(); say(input.value.trim()?'Reply saved and sent to the student.':'Reply cleared.');} }
+    else if(d.delBank){if(!await GBUI.confirmAction("Delete this question?","It will be permanently removed from the reusable question bank. This cannot be undone.","Yes, delete question",{requirePhrase:"DELETE QUESTION"}))return;await GB.del("/api/admin/question-bank/"+encodeURIComponent(d.delBank));bank();overview();say("Question deleted.")}
+    else if(d.toggleNote){await GB.api("/api/admin/notes/"+d.toggleNote,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({published:d.pub==="1"})});notes();overview()}
+    else if(d.delNote){if(!await GBUI.confirmAction("Delete this material?","The published material and its stored files will be permanently removed. This cannot be undone.","Yes, delete material",{requirePhrase:"DELETE MATERIAL"}))return;await GB.del("/api/admin/notes/"+d.delNote);notes();overview()}
+    else if(d.toggleTest){await GB.api("/api/admin/tests/"+d.toggleTest,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({published:d.pub==="1"})});tests();overview()}
+    else if(d.delTest){if(!await GBUI.confirmAction("Delete this CBT?","This removes the CBT and all results associated with it. This cannot be undone.","Yes, delete CBT",{requirePhrase:"DELETE CBT"}))return;await GB.del("/api/admin/tests/"+d.delTest);tests();overview()}
+    else if(d.editAnn){ const a=annCache.find(x=>x.id===d.editAnn); if(a) startAnnEdit(a); }
+    else if(d.toggleAnn){await GB.api("/api/admin/announcements/"+d.toggleAnn,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({published:d.pub==="1"})});anns();overview()}
+    else if(d.delAnn){if(!await GBUI.confirmAction("Delete this announcement?","The announcement and its uploaded media will be permanently removed. This cannot be undone.","Yes, delete announcement",{requirePhrase:"DELETE ANNOUNCEMENT"}))return;await GB.del("/api/admin/announcements/"+d.delAnn);if($("aeditId").value===d.delAnn)resetAnnForm();anns();overview();say("Announcement deleted.")}
+    else if(d.fbResolve){await GB.api("/api/admin/feedback/"+encodeURIComponent(d.fbResolve),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({resolved:d.done!=="1"})});feedback()}
+    else if(d.fbDel){if(!await GBUI.confirmAction("Delete this message?","The student's feedback will be permanently removed. This cannot be undone.","Yes, delete",{requirePhrase:"DELETE MESSAGE"}))return;await GB.del("/api/admin/feedback/"+encodeURIComponent(d.fbDel));feedback();overview()}
+  }catch(err){say(err.message,"error")}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "name": "gifted-brains-eduspace-admin",
+  "installCommand": "npm install",
+  "buildCommand": "node scripts/verify-edgeone.mjs",
+  "outputDirectory": ".",
+  "nodeVersion": "22.11.0",
+  "headers": [
+    {
+      "source": "/*.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ],
+  "cloudFunctions": {
+    "maxDuration": 60
+  }
+}

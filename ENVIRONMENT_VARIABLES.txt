@@ -1,0 +1,18 @@
+GIFTED BRAINZ EDUSPACE v12.0.18 — ADMIN PORTAL SERVER ENVIRONMENT
+
+REQUIRED — ADMIN AUTHENTICATION
+AUTH_SECRET=<same strong secret used by the Student Portal>
+ADMIN_USERNAME=<administrator sign-in username>
+ADMIN_PASSWORD=<administrator sign-in password>
+ADMIN_EMAIL=<administrator email address>
+
+REQUIRED — SHARED STUDENT BACKEND
+GB_STUDENT_API_URL=https://YOUR-STUDENT-PORTAL-DOMAIN
+
+NOTES
+- Deploy these values only as server environment variables on the Admin Portal.
+- AUTH_SECRET must match the Student Portal AUTH_SECRET exactly so the shared Student backend can validate Admin requests.
+- GB_STUDENT_API_URL is the Student Portal site root. The Admin proxy also accepts values ending in /api or /api/student and normalises them.
+- Do not place any of these values in admin-config.js, HTML, browser JavaScript, GitHub, or the public ZIP as secrets.
+- ADMIN_USERNAME, ADMIN_PASSWORD and ADMIN_EMAIL belong ONLY to the Admin Portal.
+- The Admin browser never receives the Student backend credential or Admin session token; authentication uses an HttpOnly Secure SameSite=Lax cookie.

@@ -1,0 +1,12 @@
+{
+  "product": "Gifted Brainz EduSpace Admin",
+  "version": "12.0.15",
+  "release": "deep-audit-corrected",
+  "status": "validated locally",
+  "liveProductionTested": false,
+  "changes": [
+    "Replaced root-level Student redirect with guaranteed /api/student-login Node Function route",
+    "Updated login and Student View shortcuts",
+    "Bumped active Admin assets/cache/proxy marker to v12.0.15"
+  ]
+}

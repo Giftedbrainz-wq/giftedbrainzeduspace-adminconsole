@@ -1,0 +1,13 @@
+{
+  "product": "Gifted Brainz EduSpace Admin",
+  "version": "12.0.12",
+  "release": "deep-audit-corrected",
+  "status": "validated locally",
+  "liveProductionTested": false,
+  "changes": [
+    "Removed unsupported Admin runtime-manifest updater and matching service-worker calls",
+    "Admin notifications and logout now remain inside Admin portal",
+    "Admin service worker is origin-safe and caches only the local Admin shell",
+    "Version/cache bumped"
+  ]
+}

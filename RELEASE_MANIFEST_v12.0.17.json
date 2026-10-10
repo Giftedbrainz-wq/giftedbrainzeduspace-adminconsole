@@ -1,0 +1,15 @@
+{
+  "product": "Gifted Brainz EduSpace Admin",
+  "version": "12.0.17",
+  "type": "admin-build",
+  "qa": {
+    "static": true,
+    "mockIntegration": true,
+    "productionLive": false
+  },
+  "notes": [
+    "Verified shared Admin-to-Student proxy operations.",
+    "Preserved collection IDs and title overrides.",
+    "Verified chunked material-upload path through the Admin proxy."
+  ]
+}

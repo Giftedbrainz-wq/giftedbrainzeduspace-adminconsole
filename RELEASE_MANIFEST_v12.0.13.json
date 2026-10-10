@@ -1,0 +1,14 @@
+{
+  "product": "Gifted Brainz EduSpace Admin",
+  "version": "12.0.13",
+  "release": "deep-audit-corrected",
+  "status": "validated locally",
+  "liveProductionTested": false,
+  "changes": [
+    "Fixed Student subject-registration state by returning subject IDs with Admin student records",
+    "Password verification/reset now uses the shared Student backend route without double token-version increment",
+    "Added server-routed Student Login shortcut using GB_STUDENT_API_URL",
+    "Added the missing Admin environment-variable deployment guide",
+    "Removed duplicate Admin notification route block and bumped version/cache"
+  ]
+}

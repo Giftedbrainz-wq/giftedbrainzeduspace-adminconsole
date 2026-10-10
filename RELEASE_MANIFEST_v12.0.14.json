@@ -1,0 +1,13 @@
+{
+  "product": "Gifted Brainz EduSpace Admin",
+  "version": "12.0.14",
+  "release": "deep-audit-corrected",
+  "status": "validated locally",
+  "liveProductionTested": false,
+  "changes": [
+    "Corrected shared Student backend version diagnostic text",
+    "Student View now routes through /student-login using server-side Student origin",
+    "Restored historical v12.0.12 manifest integrity",
+    "Bumped active Admin assets/cache/proxy marker to v12.0.14"
+  ]
+}

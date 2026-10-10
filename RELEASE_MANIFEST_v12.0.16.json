@@ -1,0 +1,11 @@
+{
+  "product": "Gifted Brainz EduSpace Admin",
+  "version": "12.0.16",
+  "release": "deep-audit-corrected",
+  "status": "validated locally",
+  "liveProductionTested": false,
+  "changes": [
+    "Updated shared Student backend diagnostic version to v12.1.7",
+    "Bumped active Admin assets/cache/proxy marker to v12.0.16"
+  ]
+}
